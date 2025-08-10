@@ -1,0 +1,82 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: epos-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: multi_tenant_epos
+      POSTGRES_USER: epos_user
+      POSTGRES_PASSWORD: epos_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - epos-network
+
+  # Redis for caching and sessions
+  redis:
+    image: redis:7-alpine
+    container_name: epos-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - epos-network
+
+  # NestJS Application
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: production
+    container_name: epos-app
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      DATABASE_HOST: postgres
+      DATABASE_PORT: 5432
+      DATABASE_USERNAME: epos_user
+      DATABASE_PASSWORD: epos_password
+      DATABASE_NAME: multi_tenant_epos
+      NODE_ENV: production
+    volumes:
+      - ./uploads:/app/uploads
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - epos-network
+
+  # MinIO for S3-compatible storage (development)
+  minio:
+    image: minio/minio:latest
+    container_name: epos-minio
+    restart: unless-stopped
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin123
+    command: server /data --console-address ":9001"
+    volumes:
+      - minio_data:/data
+    networks:
+      - epos-network
+
+volumes:
+  postgres_data:
+  redis_data:
+  minio_data:
+
+networks:
+  epos-network:
+    driver: bridge
