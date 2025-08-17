@@ -281,7 +281,7 @@ describe('OrdersController', () => {
       );
       expect(result.success).toBe(true);
       expect(result.message).toBe('Orders retrieved successfully');
-      expect(result.data).toEqual(mockOrders);
+      expect(result.data).toEqual([mockOrderResponse]);
     });
 
     it('should handle get orders errors', async () => {

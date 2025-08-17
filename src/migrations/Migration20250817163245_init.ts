@@ -1,6 +1,6 @@
 import { Migration } from '@mikro-orm/migrations';
 
-export class Migration20250817153310_init extends Migration {
+export class Migration20250817163245_init extends Migration {
 
   override async up(): Promise<void> {
     this.addSql(`create table "permissions" ("id" serial primary key, "created_at" timestamptz not null, "updated_at" timestamptz not null, "key" varchar(100) not null, "name" varchar(100) not null, "description" varchar(255) null, "category" text check ("category" in ('business', 'items', 'inventory', 'orders', 'customers', 'payments', 'expenses', 'reports', 'settings', 'users')) not null default 'business', "is_active" boolean not null default true);`);
@@ -9,7 +9,7 @@ export class Migration20250817153310_init extends Migration {
     this.addSql(`create table "users" ("id" serial primary key, "created_at" timestamptz not null, "updated_at" timestamptz not null, "first_name" varchar(100) not null, "last_name" varchar(100) not null, "phone" varchar(20) not null, "password" varchar(255) not null, "is_active" boolean not null default true, "phone_verified" boolean not null default false, "last_login_at" timestamptz null, "avatar" varchar(255) null, "preferences" jsonb null);`);
     this.addSql(`alter table "users" add constraint "users_phone_unique" unique ("phone");`);
 
-    this.addSql(`create table "businesses" ("id" serial primary key, "created_at" timestamptz not null, "updated_at" timestamptz not null, "gg_id" varchar(6) not null, "name" varchar(255) not null, "phone" varchar(20) not null, "address" text null, "industry" varchar(100) null, "status" text check ("status" in ('pending', 'active', 'suspended', 'inactive')) not null default 'Pending', "logo" text null, "banner" text null, "description" text null, "settings" jsonb null, "approved_at" timestamptz null, "approved_by_id" int null);`);
+    this.addSql(`create table "businesses" ("id" serial primary key, "created_at" timestamptz not null, "updated_at" timestamptz not null, "gg_id" varchar(6) not null, "name" varchar(255) not null, "phone" varchar(20) not null, "address" text null, "industry" varchar(100) null, "status" text check ("status" in ('pending', 'active', 'suspended', 'inactive')) not null default 'pending', "logo" text null, "banner" text null, "description" text null, "settings" jsonb null, "approved_at" timestamptz null, "approved_by_id" int null);`);
     this.addSql(`alter table "businesses" add constraint "businesses_phone_unique" unique ("phone");`);
     this.addSql(`alter table "businesses" add constraint "businesses_gg_id_unique" unique ("gg_id");`);
 
@@ -20,7 +20,7 @@ export class Migration20250817153310_init extends Migration {
 
     this.addSql(`create table "notifications" ("id" serial primary key, "created_at" timestamptz not null, "updated_at" timestamptz not null, "business_id" int not null, "created_by_id" int null, "updated_by_id" int null, "template" varchar(255) not null, "receiver_id" int not null, "variables" jsonb not null, "channel" text check ("channel" in ('whatsapp', 'sms')) not null, "send_at" timestamptz not null, "external_id" varchar(255) null, "sent_at" timestamptz null, "status" text check ("status" in ('pending', 'sent', 'delivered', 'read', 'failed')) not null default 'pending', "delivered_at" timestamptz null, "read_at" timestamptz null, "error_message" text null, "retry_count" int not null default 0, "last_retry_at" timestamptz null);`);
 
-    this.addSql(`create table "members" ("id" serial primary key, "created_at" timestamptz not null, "updated_at" timestamptz not null, "created_by_id" int null, "updated_by_id" int null, "user_id" int not null, "business_id" int not null, "position" varchar(100) null, "status" text check ("status" in ('Active', 'Inactive', 'Suspended')) not null default 'Active', "is_owner" boolean not null default false, "joined_at" timestamptz null, "left_at" timestamptz null, "settings" jsonb null);`);
+    this.addSql(`create table "members" ("id" serial primary key, "created_at" timestamptz not null, "updated_at" timestamptz not null, "created_by_id" int null, "updated_by_id" int null, "user_id" int not null, "business_id" int not null, "position" varchar(100) null, "status" text check ("status" in ('active', 'inactive', 'suspended')) not null default 'active', "is_owner" boolean not null default false, "joined_at" timestamptz null, "left_at" timestamptz null, "settings" jsonb null);`);
     this.addSql(`alter table "members" add constraint "members_business_id_user_id_unique" unique ("business_id", "user_id");`);
 
     this.addSql(`create table "members_roles" ("member_id" int not null, "role_id" int not null, constraint "members_roles_pkey" primary key ("member_id", "role_id"));`);

@@ -1,6 +1,5 @@
 import { Entity, Enum, ManyToOne, Property, Unique } from '@mikro-orm/core';
 
-import { User } from '../../auth/entities/user.entity';
 import { BaseEntity } from '../../common/entities/base.entity';
 import { BusinessStatus } from '../enums/business-status.enum';
 
@@ -44,6 +43,6 @@ export class Business extends BaseEntity {
   @Property({ type: 'timestamptz', nullable: true })
   approvedAt?: Date;
 
-  @ManyToOne(() => User, { nullable: true })
-  approvedBy?: User;
+  @ManyToOne('User', { nullable: true })
+  approvedBy?: any;
 }

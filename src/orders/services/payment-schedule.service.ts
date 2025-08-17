@@ -24,9 +24,7 @@ export class PaymentScheduleService {
     private readonly em: EntityManager,
   ) {}
 
-  /**
-   * Generate payment schedule for installment payments
-   */
+
   async generatePaymentSchedule(
     businessId: string,
     invoice: Invoice,

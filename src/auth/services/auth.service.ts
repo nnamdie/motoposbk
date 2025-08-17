@@ -27,6 +27,7 @@ import { RegisterBusinessResponseDto } from '../models/register-business.respons
 import { RequestOtpRequestDto } from '../models/request-otp.request.dto';
 import { UserProfileDto } from '../models/user-profile.response.dto';
 import { VerifyOtpRequestDto } from '../models/verify-otp.request.dto';
+import { MemberStatus } from '../enums/member-status.enum';
 
 @Injectable()
 export class AuthService {
@@ -112,7 +113,7 @@ export class AuthService {
       user,
       business,
       isOwner: true,
-      status: 'Active' as any,
+      status: MemberStatus.ACTIVE,
       joinedAt: new Date(),
       createdBy: user, // Pass the user entity, not ID
     });
@@ -175,7 +176,7 @@ export class AuthService {
       business: business,
     });
 
-    if (!member || member.status !== 'Active') {
+    if (!member || member.status !== MemberStatus.ACTIVE) {
       throw new UnauthorizedException(
         'User is not a member of this business or membership is not active',
       );
@@ -250,7 +251,7 @@ export class AuthService {
       business: business,
     });
 
-    if (!member || member.status !== 'Active') {
+    if (!member || member.status !== MemberStatus.ACTIVE) {
       throw new UnauthorizedException(
         'User is not a member of this business or membership is not active',
       );
@@ -384,7 +385,7 @@ export class AuthService {
       { populate: ['roles', 'roles.permissions', 'directPermissions'] },
     );
 
-    if (!member || member.status !== 'Active') {
+    if (!member || member.status !== MemberStatus.ACTIVE) {
       throw new UnauthorizedException(
         'User is not a member of this business or membership is not active',
       );

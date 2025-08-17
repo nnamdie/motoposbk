@@ -188,7 +188,7 @@ describe('PaymentScheduleService', () => {
       const result = await service.getPaymentSchedule('business_123', 1);
 
       expect(mockScheduleRepository.find).toHaveBeenCalledWith(
-        { business: { ggId: 'business_123' }, invoiceId: 1 },
+        { business: { ggId: 'business_123' }, invoice: { id: 1 } },
         { orderBy: { installmentNumber: 'ASC' } },
       );
       expect(result).toHaveLength(2);
@@ -341,7 +341,7 @@ describe('PaymentScheduleService', () => {
             amountPaid: 20000,
             status: ScheduleStatus.PAID,
             dueDate: new Date('2024-02-01'),
-
+            invoice: { id: 1 },
             remainingBalance: 0,
             createdAt: new Date('2024-01-01'),
             updatedAt: new Date('2024-01-01'),

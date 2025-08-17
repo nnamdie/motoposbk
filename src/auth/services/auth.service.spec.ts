@@ -125,7 +125,7 @@ describe('AuthService', () => {
 
       const mockBusiness = {
         ggId: businessGgId,
-        status: 'Active',
+        status: 'active',
       };
 
       const mockUser = {
@@ -137,7 +137,7 @@ describe('AuthService', () => {
 
       const mockMember = {
         id: 1,
-        status: 'Active',
+        status: 'active',
       };
 
       const mockAuthOtp = {
@@ -176,7 +176,7 @@ describe('AuthService', () => {
 
       const mockBusiness = {
         ggId: businessGgId,
-        status: 'Active',
+        status: 'active',
       };
 
       const mockUser = {
@@ -199,7 +199,7 @@ describe('AuthService', () => {
 
       const mockMember = {
         id: 1,
-        status: 'Active',
+        status: 'active',
         isOwner: false,
         roles: { getItems: () => [] },
         directPermissions: { getItems: () => [] },
