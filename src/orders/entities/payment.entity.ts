@@ -1,7 +1,8 @@
 import { Entity, Enum, ManyToOne, Property, Unique } from '@mikro-orm/core';
 
-import { User } from '../../auth/entities/user.entity';
 import { TenantEntity } from '@/business/entities/tenant.entity';
+
+import { User } from '../../auth/entities/user.entity';
 import { PaymentMethod } from '../enums/payment-method.enum';
 import { PaymentStatus } from '../enums/payment-status.enum';
 import { PaymentType } from '../enums/payment-type.enum';

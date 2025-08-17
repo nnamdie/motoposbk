@@ -1,7 +1,8 @@
 import { Entity, Enum, ManyToOne, Property } from '@mikro-orm/core';
 
-import { User } from '../../auth/entities/user.entity';
 import { TenantEntity } from '@/business/entities/tenant.entity';
+
+import { User } from '../../auth/entities/user.entity';
 import { ReservationStatus } from '../enums/reservation-status.enum';
 import { ReservationType } from '../enums/reservation-type.enum';
 import { Item } from './item.entity';

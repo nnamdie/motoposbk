@@ -1,10 +1,11 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+
 import { NotificationChannel } from '../enums/notification-channel.enum';
 import { AbstractNotificationProvider } from '../providers/abstract-notification-provider';
-import { TwilioWhatsAppProvider } from '../providers/twilio-whatsapp-provider';
-import { TwilioSmsProvider } from '../providers/twilio-sms-provider';
 import { LoggingProvider } from '../providers/logging-provider';
+import { TwilioSmsProvider } from '../providers/twilio-sms-provider';
+import { TwilioWhatsAppProvider } from '../providers/twilio-whatsapp-provider';
 
 @Injectable()
 export class NotificationProviderFactory {
@@ -16,7 +17,8 @@ export class NotificationProviderFactory {
   ) {}
 
   createProvider(channel: NotificationChannel): AbstractNotificationProvider {
-    const isDevMode = this.configService.get<string>('NODE_ENV') === 'development';
+    const isDevMode =
+      this.configService.get<string>('NODE_ENV') === 'development';
 
     // In development mode, use logging provider for all channels
     if (isDevMode) {
@@ -57,7 +59,10 @@ export class NotificationProviderFactory {
     return providers;
   }
 
-  getProviderStatus(): Record<string, { available: boolean; configRequirements: string[] }> {
+  getProviderStatus(): Record<
+    string,
+    { available: boolean; configRequirements: string[] }
+  > {
     return {
       'twilio-whatsapp': {
         available: this.twilioWhatsAppProvider.isAvailable(),
@@ -67,7 +72,7 @@ export class NotificationProviderFactory {
         available: this.twilioSmsProvider.isAvailable(),
         configRequirements: this.twilioSmsProvider.getConfigRequirements(),
       },
-      'logging': {
+      logging: {
         available: true,
         configRequirements: [],
       },
@@ -83,11 +88,17 @@ export const notificationProviderFactory = {
     twilioWhatsAppProvider: TwilioWhatsAppProvider,
     twilioSmsProvider: TwilioSmsProvider,
     loggingProvider: LoggingProvider,
-  ) => new NotificationProviderFactory(
-    configService,
-    twilioWhatsAppProvider,
-    twilioSmsProvider,
-    loggingProvider,
-  ),
-  inject: [ConfigService, TwilioWhatsAppProvider, TwilioSmsProvider, LoggingProvider],
+  ) =>
+    new NotificationProviderFactory(
+      configService,
+      twilioWhatsAppProvider,
+      twilioSmsProvider,
+      loggingProvider,
+    ),
+  inject: [
+    ConfigService,
+    TwilioWhatsAppProvider,
+    TwilioSmsProvider,
+    LoggingProvider,
+  ],
 };

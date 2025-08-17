@@ -1,7 +1,8 @@
 import { Entity, Enum, ManyToOne, Property, Unique } from '@mikro-orm/core';
 
-import { User } from '../../auth/entities/user.entity';
 import { TenantEntity } from '@/business/entities/tenant.entity';
+
+import { User } from '../../auth/entities/user.entity';
 import { ScheduleStatus } from '../enums/schedule-status.enum';
 import { Invoice } from './invoice.entity';
 

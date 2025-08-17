@@ -8,8 +8,9 @@ import {
   Unique,
 } from '@mikro-orm/core';
 
-import { Business } from '../../business/entities/business.entity';
 import { TenantEntity } from '@/business/entities/tenant.entity';
+
+import { Business } from '../../business/entities/business.entity';
 import { MemberStatus } from '../enums/member-status.enum';
 import { Permission } from './permission.entity';
 import { Role } from './role.entity';

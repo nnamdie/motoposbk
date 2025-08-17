@@ -15,6 +15,9 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 
+import { ApiPaginatedResponse } from '@/common/decorators/api-paginated-response.decorator';
+import { ApiBaseResponse } from '@/common/decorators/base-response.decorator';
+
 import {
   PERMISSIONS,
   RequirePermissions,
@@ -30,7 +33,10 @@ import {
   GetTenantContext,
   TenantContext,
 } from '../../common/decorators/tenant-context.decorator';
-import { BaseResponseDto, PaginatedResponseDto } from '../../common/models/base-response.dto';
+import {
+  BaseResponseDto,
+  PaginatedResponseDto,
+} from '../../common/models/base-response.dto';
 import { PaginatedQueryDto } from '../../common/models/paginated-query.dto';
 import { CalculateCartRequestDto } from '../models/calculate-cart.request.dto';
 import { CalculateCartResponseDto } from '../models/calculate-cart.response.dto';
@@ -39,8 +45,6 @@ import { CreatePaymentRequestDto } from '../models/create-payment.request.dto';
 import { OrderResponseDto } from '../models/order.response.dto';
 import { PaymentResponseDto } from '../models/payment.response.dto';
 import { OrdersService } from '../services/orders.service';
-import { ApiBaseResponse } from '@/common/decorators/base-response.decorator';
-import { ApiPaginatedResponse } from '@/common/decorators/api-paginated-response.decorator';
 
 @ApiTags('Orders')
 @ApiBearerAuth()
@@ -113,7 +117,7 @@ export class OrdersController {
     @GetTenantContext() tenantContext: TenantContext,
     @Query() query: PaginatedQueryDto,
   ): Promise<PaginatedResponseDto<OrderResponseDto>> {
-    const {orders, total} = await this.ordersService.getOrders(
+    const { orders, total } = await this.ordersService.getOrders(
       tenantContext.businessId,
       query,
     );

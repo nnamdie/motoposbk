@@ -1,17 +1,17 @@
-import { Test, TestingModule } from '@nestjs/testing';
-import { getRepositoryToken } from '@mikro-orm/nestjs';
 import { EntityManager } from '@mikro-orm/core';
-import { JwtService } from '@nestjs/jwt';
+import { getRepositoryToken } from '@mikro-orm/nestjs';
 import { ConfigService } from '@nestjs/config';
+import { JwtService } from '@nestjs/jwt';
+import { Test, TestingModule } from '@nestjs/testing';
 
-import { AuthService } from './auth.service';
-import { User } from '../entities/user.entity';
-import { Member } from '../entities/member.entity';
 import { Business } from '../../business/entities/business.entity';
-import { AuthOtp } from '../entities/auth-otp.entity';
 import { NotificationService } from '../../notifications/services/notification.service';
+import { AuthOtp } from '../entities/auth-otp.entity';
+import { Member } from '../entities/member.entity';
+import { User } from '../entities/user.entity';
 import { RequestOtpRequestDto } from '../models/request-otp.request.dto';
 import { VerifyOtpRequestDto } from '../models/verify-otp.request.dto';
+import { AuthService } from './auth.service';
 
 describe('AuthService', () => {
   let service: AuthService;
@@ -203,11 +203,6 @@ describe('AuthService', () => {
         isOwner: false,
         roles: { getItems: () => [] },
         directPermissions: { getItems: () => [] },
-      };
-
-      const mockTokens = {
-        accessToken: 'access_token',
-        refreshToken: 'refresh_token',
       };
 
       businessRepository.findOne.mockResolvedValue(mockBusiness);

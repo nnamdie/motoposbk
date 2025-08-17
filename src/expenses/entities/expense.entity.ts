@@ -1,16 +1,10 @@
-import {
-  Entity,
-  ManyToOne,
-  Property,
-  Enum,
-  Collection,
-  OneToMany,
-} from '@mikro-orm/core';
+import { Entity, Enum, ManyToOne, Property } from '@mikro-orm/core';
 
 import { TenantEntity } from '@/business/entities/tenant.entity';
+
 import { Member } from '../../auth/entities/member.entity';
-import { ExpenseStatus } from '../enums/expense-status.enum';
 import { ExpenseCategory } from '../enums/expense-category.enum';
+import { ExpenseStatus } from '../enums/expense-status.enum';
 
 @Entity({ tableName: 'expenses' })
 export class Expense extends TenantEntity {

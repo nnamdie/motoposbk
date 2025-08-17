@@ -1,9 +1,15 @@
-import { Injectable, Logger, NotFoundException, BadRequestException } from '@nestjs/common';
 import { EntityManager } from '@mikro-orm/postgresql';
+import {
+  BadRequestException,
+  Injectable,
+  Logger,
+  NotFoundException,
+} from '@nestjs/common';
+
 import { Notification } from '../entities/notification.entity';
-import { CreateNotificationRequestDto } from '../models/create-notification.request.dto';
 import { NotificationChannel } from '../enums/notification-channel.enum';
 import { NotificationStatus } from '../enums/notification-status.enum';
+import { CreateNotificationRequestDto } from '../models/create-notification.request.dto';
 import { TemplateConfigService } from './template-config.service';
 
 @Injectable()
@@ -22,36 +28,44 @@ export class NotificationService {
   async queueNotification(
     createDto: CreateNotificationRequestDto,
   ): Promise<Notification> {
-    this.logger.log(`Queueing notification for business ${createDto.business.name}[${createDto.business.id}] via ${createDto.channel}`);
+    this.logger.log(
+      `Queueing notification for business ${createDto.business.name}[${createDto.business.id}] via ${createDto.channel}`,
+    );
 
     // Step 1: Validate template exists
-    const templateConfig = await this.templateConfigService.getTemplateConfig(createDto.template);
+    const templateConfig = await this.templateConfigService.getTemplateConfig(
+      createDto.template,
+    );
 
     if (!templateConfig) {
-      throw new BadRequestException(`Template '${createDto.template}' not found`);
+      throw new BadRequestException(
+        `Template '${createDto.template}' not found`,
+      );
     }
 
     // Step 2: Check if template supports the requested channel
-    const channelSupported = await this.templateConfigService.validateTemplateChannel(
-      createDto.template,
-      createDto.channel
-    );
+    const channelSupported =
+      await this.templateConfigService.validateTemplateChannel(
+        createDto.template,
+        createDto.channel,
+      );
 
     if (!channelSupported) {
       throw new BadRequestException(
-        `Template '${createDto.template}' does not support channel '${createDto.channel}'`
+        `Template '${createDto.template}' does not support channel '${createDto.channel}'`,
       );
     }
 
     // Step 3: Validate required variables
-    const variableValidation = await this.templateConfigService.validateTemplateVariables(
-      createDto.template,
-      createDto.variables
-    );
+    const variableValidation =
+      await this.templateConfigService.validateTemplateVariables(
+        createDto.template,
+        createDto.variables,
+      );
 
     if (!variableValidation.isValid) {
       throw new BadRequestException(
-        `Missing required variables: ${variableValidation.missing.join(', ')}`
+        `Missing required variables: ${variableValidation.missing.join(', ')}`,
       );
     }
 
@@ -67,7 +81,7 @@ export class NotificationService {
     });
 
     await this.em.persistAndFlush(notification);
-    
+
     this.logger.log(`Notification queued with ID: ${notification.id}`);
     return notification;
   }
@@ -75,13 +89,19 @@ export class NotificationService {
   /**
    * Get notification by ID
    */
-  async getNotificationById(id: number, businessId: string): Promise<Notification> {
-    const notification = await this.em.findOne(Notification, { id, business: { ggId: businessId } });
-    
+  async getNotificationById(
+    id: number,
+    businessId: string,
+  ): Promise<Notification> {
+    const notification = await this.em.findOne(Notification, {
+      id,
+      business: { ggId: businessId },
+    });
+
     if (!notification) {
       throw new NotFoundException(`Notification with ID ${id} not found`);
     }
-    
+
     return notification;
   }
 
@@ -104,13 +124,17 @@ export class NotificationService {
     status: NotificationStatus,
     limit = 100,
   ): Promise<Notification[]> {
-    return this.em.find(Notification, {
-      business: { ggId: businessId },
-      status,
-    }, {
-      limit,
-      orderBy: { createdAt: 'DESC' },
-    });
+    return this.em.find(
+      Notification,
+      {
+        business: { ggId: businessId },
+        status,
+      },
+      {
+        limit,
+        orderBy: { createdAt: 'DESC' },
+      },
+    );
   }
 
   /**
@@ -123,13 +147,13 @@ export class NotificationService {
     metadata?: Partial<Notification>,
   ): Promise<Notification> {
     const notification = await this.getNotificationById(id, businessId);
-    
+
     notification.status = status;
-    
+
     if (metadata) {
       Object.assign(notification, metadata);
     }
-    
+
     // Set timestamps based on status
     switch (status) {
       case NotificationStatus.SENT:
@@ -146,7 +170,7 @@ export class NotificationService {
         notification.retryCount = (notification.retryCount || 0) + 1;
         break;
     }
-    
+
     await this.em.persistAndFlush(notification);
     return notification;
   }
@@ -170,7 +194,9 @@ export class NotificationService {
   /**
    * Get available templates for a channel
    */
-  async getAvailableTemplates(channel?: NotificationChannel): Promise<string[]> {
+  async getAvailableTemplates(
+    channel?: NotificationChannel,
+  ): Promise<string[]> {
     if (channel) {
       return this.templateConfigService.getTemplatesByChannel(channel);
     }

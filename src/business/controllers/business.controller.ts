@@ -1,10 +1,7 @@
 import { Body, Controller, Get, Put, UseGuards } from '@nestjs/common';
-import {
-  ApiBearerAuth,
-  ApiOperation,
-  ApiResponse,
-  ApiTags,
-} from '@nestjs/swagger';
+import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+
+import { ApiBaseResponse } from '@/common/decorators/base-response.decorator';
 
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { TenantResolveGuard } from '../../auth/guards/tenant-resolve.guard';
@@ -20,7 +17,6 @@ import { BaseResponseDto } from '../../common/models/base-response.dto';
 import { BusinessProfileResponseDto } from '../models/business-profile.response.dto';
 import { UpdateBusinessProfileRequestDto } from '../models/update-business-profile.request.dto';
 import { BusinessService } from '../services/business.service';
-import { ApiBaseResponse } from '@/common/decorators/base-response.decorator';
 
 @ApiTags('Business')
 @Controller('business/:businessGgId')

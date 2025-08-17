@@ -1,14 +1,20 @@
-import { Injectable, NotFoundException, BadRequestException, ForbiddenException } from '@nestjs/common';
 import { EntityManager, EntityRepository } from '@mikro-orm/core';
 import { InjectRepository } from '@mikro-orm/nestjs';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 
-import { Expense } from '../entities/expense.entity';
+import { PaginatedResponseDto } from '@/common/models/base-response.dto';
+
 import { Member } from '../../auth/entities/member.entity';
-import { CreateExpenseRequestDto } from '../models/create-expense.request.dto';
-import { ApproveExpenseRequestDto } from '../models/approve-expense.request.dto';
-import { ExpenseResponseDto } from '../models/expense.response.dto';
-import { ExpenseStatus } from '../enums/expense-status.enum';
 import { PaginatedQueryDto } from '../../common/models/paginated-query.dto';
+import { Expense } from '../entities/expense.entity';
+import { ExpenseStatus } from '../enums/expense-status.enum';
+import { ApproveExpenseRequestDto } from '../models/approve-expense.request.dto';
+import { CreateExpenseRequestDto } from '../models/create-expense.request.dto';
+import { ExpenseResponseDto } from '../models/expense.response.dto';
 
 @Injectable()
 export class ExpenseService {
@@ -47,21 +53,19 @@ export class ExpenseService {
   async getExpenses(
     businessId: string,
     query: PaginatedQueryDto,
-    currentMember: Member,
-  ): Promise<{ expenses: ExpenseResponseDto[]; total: number }> {
+    _currentMember: Member,
+  ): Promise<PaginatedResponseDto<ExpenseResponseDto>> {
     const { page = 1, limit = 10, search, status } = query;
     const offset = (page - 1) * limit;
 
     const filter: any = { business: { ggId: businessId } };
-    
+
     if (status) {
       filter.status = status;
     }
-    
+
     if (search) {
-      filter.$or = [
-        { notes: { $ilike: `%${search}%` } },
-      ];
+      filter.$or = [{ notes: { $ilike: `%${search}%` } }];
     }
 
     const [expenses, total] = await this.expenseRepository.findAndCount(
@@ -70,16 +74,22 @@ export class ExpenseService {
         limit,
         offset,
         orderBy: { createdAt: 'DESC' as any },
-        populate: [
-          'requester.user',
-          'approver.user',
-        ],
+        populate: ['requester.user', 'approver.user'],
       },
     );
 
     return {
-      expenses: expenses.map(expense => this.mapToResponseDto(expense)),
-      total,
+      success: true,
+      data: expenses.map((expense) => this.mapToResponseDto(expense)),
+      meta: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
+        hasNextPage: page < Math.ceil(total / limit),
+        hasPreviousPage: page > 1,
+      },
+      timestamp: new Date().toISOString(),
     };
   }
 
@@ -89,7 +99,7 @@ export class ExpenseService {
   async getExpense(
     businessId: string,
     expenseId: number,
-    currentMember: Member,
+    _currentMember: Member,
   ): Promise<ExpenseResponseDto> {
     const expense = await this.expenseRepository.findOne(
       {
@@ -97,10 +107,7 @@ export class ExpenseService {
         business: { ggId: businessId },
       },
       {
-        populate: [
-          'requester.user',
-          'approver.user',
-        ],
+        populate: ['requester.user', 'approver.user'],
       },
     );
 
@@ -126,10 +133,7 @@ export class ExpenseService {
         business: { ggId: businessId },
       },
       {
-        populate: [
-          'requester.user',
-          'approver.user',
-        ],
+        populate: ['requester.user', 'approver.user'],
       },
     );
 
@@ -139,7 +143,9 @@ export class ExpenseService {
 
     // Validate rejection reason is provided when rejecting
     if (dto.status === ExpenseStatus.REJECTED && !dto.rejectionReason) {
-      throw new BadRequestException('Rejection reason is required when rejecting an expense');
+      throw new BadRequestException(
+        'Rejection reason is required when rejecting an expense',
+      );
     }
 
     // Update expense status
@@ -167,7 +173,7 @@ export class ExpenseService {
   async cancelExpense(
     businessId: string,
     expenseId: number,
-    currentMember: Member,
+    _currentMember: Member,
   ): Promise<ExpenseResponseDto> {
     const expense = await this.expenseRepository.findOne(
       {
@@ -175,10 +181,7 @@ export class ExpenseService {
         business: { ggId: businessId },
       },
       {
-        populate: [
-          'requester.user',
-          'approver.user',
-        ],
+        populate: ['requester.user', 'approver.user'],
       },
     );
 

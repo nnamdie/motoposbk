@@ -1,9 +1,9 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
-  IsNotEmpty,
-  IsString,
-  IsOptional,
   IsEnum,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
   MaxLength,
 } from 'class-validator';
 
@@ -28,6 +28,8 @@ export class ApproveExpenseRequestDto {
   })
   @IsOptional()
   @IsString({ message: 'Rejection reason must be a string' })
-  @MaxLength(1000, { message: 'Rejection reason cannot exceed 1000 characters' })
+  @MaxLength(1000, {
+    message: 'Rejection reason cannot exceed 1000 characters',
+  })
   rejectionReason?: string;
 }

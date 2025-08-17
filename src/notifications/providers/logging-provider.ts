@@ -1,7 +1,11 @@
 import { Injectable, Logger } from '@nestjs/common';
+
 import { NotificationChannel } from '../enums/notification-channel.enum';
+import {
+  SendNotificationRequest,
+  SendNotificationResult,
+} from '../models/notification-provider.interface';
 import { AbstractNotificationProvider } from './abstract-notification-provider';
-import { SendNotificationRequest, SendNotificationResult } from '../models/notification-provider.interface';
 
 @Injectable()
 export class LoggingProvider extends AbstractNotificationProvider {
@@ -12,7 +16,9 @@ export class LoggingProvider extends AbstractNotificationProvider {
   async sendNotification(
     request: SendNotificationRequest,
   ): Promise<SendNotificationResult> {
-    this.logger.log(`[DEV MODE] Notification would be sent via ${request.channel || 'unknown'} channel`);
+    this.logger.log(
+      `[DEV MODE] Notification would be sent via ${request.channel || 'unknown'} channel`,
+    );
     this.logger.log(`Receiver: ${request.receiver}`);
     this.logger.log(`Business ID: ${request.businessId}`);
     this.logger.log(`Template: ${JSON.stringify(request.template, null, 2)}`);

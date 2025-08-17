@@ -1,6 +1,8 @@
 import { NotificationChannel } from '../enums/notification-channel.enum';
-import { SendNotificationRequest, SendNotificationResult } from '../models/notification-provider.interface';
-
+import {
+  SendNotificationRequest,
+  SendNotificationResult,
+} from '../models/notification-provider.interface';
 
 export abstract class AbstractNotificationProvider {
   abstract readonly providerName: string;

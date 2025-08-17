@@ -12,9 +12,9 @@ import {
 import {
   ApiBearerAuth,
   ApiOperation,
+  ApiParam,
   ApiResponse,
   ApiTags,
-  ApiParam,
 } from '@nestjs/swagger';
 
 import {
@@ -24,6 +24,7 @@ import {
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { PermissionsGuard } from '../../auth/guards/permissions.guard';
 import { TenantResolveGuard } from '../../auth/guards/tenant-resolve.guard';
+import { ApiPaginatedResponse } from '../../common/decorators/api-paginated-response.decorator';
 import {
   AuthenticatedUser,
   CurrentUser,
@@ -37,11 +38,10 @@ import {
   PaginatedResponseDto,
 } from '../../common/models/base-response.dto';
 import { PaginatedQueryDto } from '../../common/models/paginated-query.dto';
-import { CreateExpenseRequestDto } from '../models/create-expense.request.dto';
 import { ApproveExpenseRequestDto } from '../models/approve-expense.request.dto';
+import { CreateExpenseRequestDto } from '../models/create-expense.request.dto';
 import { ExpenseResponseDto } from '../models/expense.response.dto';
 import { ExpenseService } from '../services/expense.service';
-import { ApiPaginatedResponse } from '../../common/decorators/api-paginated-response.decorator';
 
 @ApiTags('Expenses')
 @Controller('business/:businessGgId/expenses')
@@ -171,7 +171,8 @@ export class ExpenseController {
   @RequirePermissions(PERMISSIONS.EXPENSES.APPROVE)
   @ApiOperation({
     summary: 'Approve or reject expense',
-    description: 'Approve or reject an expense request (requires approval permission)',
+    description:
+      'Approve or reject an expense request (requires approval permission)',
   })
   @ApiParam({
     name: 'businessGgId',
@@ -202,6 +203,7 @@ export class ExpenseController {
     );
 
     const action = dto.status === 'approved' ? 'approved' : 'rejected';
+
     return {
       success: true,
       data: result,
@@ -214,7 +216,8 @@ export class ExpenseController {
   @RequirePermissions(PERMISSIONS.EXPENSES.UPDATE)
   @ApiOperation({
     summary: 'Cancel expense',
-    description: 'Cancel an expense request (only by requester or with approval permission)',
+    description:
+      'Cancel an expense request (only by requester or with approval permission)',
   })
   @ApiParam({
     name: 'businessGgId',

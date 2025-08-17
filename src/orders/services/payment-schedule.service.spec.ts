@@ -26,7 +26,12 @@ describe('PaymentScheduleService', () => {
     currency: 'NGN',
     order: { id: 1, orderNumber: 'ORD_001' } as any,
     orderId: 1,
-    customer: { id: 1, firstName: 'John', lastName: 'Doe', phone: '1234567890' } as any,
+    customer: {
+      id: 1,
+      firstName: 'John',
+      lastName: 'Doe',
+      phone: '1234567890',
+    } as any,
     customerId: 1,
     type: 'STANDARD',
     status: 'DRAFT',

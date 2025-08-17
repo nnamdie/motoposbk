@@ -1,6 +1,8 @@
-import { Entity, Property, ManyToOne, Enum } from '@mikro-orm/core';
-import { User } from '../../auth/entities/user.entity';
+import { Entity, Enum, ManyToOne, Property } from '@mikro-orm/core';
+
 import { TenantEntity } from '@/business/entities/tenant.entity';
+
+import { User } from '../../auth/entities/user.entity';
 import { NotificationChannel } from '../enums/notification-channel.enum';
 import { NotificationStatus } from '../enums/notification-status.enum';
 

@@ -2,7 +2,6 @@ import {
   BeforeCreate,
   BeforeUpdate,
   Entity,
-  ManyToOne,
   PrimaryKey,
   Property,
 } from '@mikro-orm/core';

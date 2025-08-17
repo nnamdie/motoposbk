@@ -1,8 +1,7 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
-import { ExpenseStatus } from '../enums/expense-status.enum';
 import { ExpenseCategory } from '../enums/expense-category.enum';
-import { MemberResponseDto } from '@/auth/models/member-profile.response.dto';
+import { ExpenseStatus } from '../enums/expense-status.enum';
 
 export class ExpenseMemberDto {
   @ApiProperty({

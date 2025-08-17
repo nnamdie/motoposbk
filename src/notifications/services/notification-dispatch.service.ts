@@ -1,17 +1,18 @@
+import { CreateRequestContext, EntityManager } from '@mikro-orm/postgresql';
 import { Injectable, Logger } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
-import { CreateRequestContext, EntityManager } from '@mikro-orm/postgresql';
-import * as Mustache from 'mustache';
 import * as fs from 'fs/promises';
+import * as Mustache from 'mustache';
 import * as path from 'path';
+
 import { Notification } from '../entities/notification.entity';
-import { NotificationService } from './notification.service';
-import { NotificationProviderFactory } from '../factories/notification-provider.factory';
-import { AbstractNotificationProvider } from '../providers/abstract-notification-provider';
-import { NotificationStatus } from '../enums/notification-status.enum';
 import { NotificationChannel } from '../enums/notification-channel.enum';
-import { TemplateConfigService } from './template-config.service';
+import { NotificationStatus } from '../enums/notification-status.enum';
+import { NotificationProviderFactory } from '../factories/notification-provider.factory';
 import { SendNotificationResult } from '../models/notification-provider.interface';
+import { AbstractNotificationProvider } from '../providers/abstract-notification-provider';
+import { NotificationService } from './notification.service';
+import { TemplateConfigService } from './template-config.service';
 
 @Injectable()
 export class NotificationDispatchService {
@@ -26,7 +27,6 @@ export class NotificationDispatchService {
     private readonly templateConfigService: TemplateConfigService,
   ) {}
 
-
   @Cron(CronExpression.EVERY_10_SECONDS)
   @CreateRequestContext()
   async processPendingNotifications(): Promise<void> {
@@ -34,19 +34,25 @@ export class NotificationDispatchService {
 
     try {
       // Fetch ALL pending notifications across ALL businesses with business relationship populated
-      const pendingNotifications = await this.em.find(Notification, {
-        status: NotificationStatus.PENDING,
-        sendAt: { $lte: new Date() },
-      }, {
-        populate: ['business', 'receiver']
-      });
+      const pendingNotifications = await this.em.find(
+        Notification,
+        {
+          status: NotificationStatus.PENDING,
+          sendAt: { $lte: new Date() },
+        },
+        {
+          populate: ['business', 'receiver'],
+        },
+      );
 
       if (pendingNotifications.length === 0) {
         this.logger.log('No pending notifications to process');
         return;
       }
 
-      this.logger.log(`Processing ${pendingNotifications.length} pending notifications`);
+      this.logger.log(
+        `Processing ${pendingNotifications.length} pending notifications`,
+      );
 
       // Process each notification
       for (const notification of pendingNotifications) {
@@ -55,10 +61,11 @@ export class NotificationDispatchService {
 
       this.logger.log('Pending notifications dispatch process completed');
     } catch (error) {
-      this.logger.error(`Error in pending notifications dispatch process: ${error.message}`);
+      this.logger.error(
+        `Error in pending notifications dispatch process: ${error.message}`,
+      );
     }
   }
-
 
   @Cron(CronExpression.EVERY_30_SECONDS)
   @CreateRequestContext()
@@ -67,19 +74,25 @@ export class NotificationDispatchService {
 
     try {
       // Fetch ALL failed notifications across ALL businesses with business relationship populated
-      const failedNotifications = await this.em.find(Notification, {
-        status: NotificationStatus.FAILED,
-        retryCount: { $lt: this.maxRetryCount },
-      }, {
-        populate: ['business', 'receiver']
-      });
+      const failedNotifications = await this.em.find(
+        Notification,
+        {
+          status: NotificationStatus.FAILED,
+          retryCount: { $lt: this.maxRetryCount },
+        },
+        {
+          populate: ['business', 'receiver'],
+        },
+      );
 
       if (failedNotifications.length === 0) {
         this.logger.log('No failed notifications to retry');
         return;
       }
 
-      this.logger.log(`Processing ${failedNotifications.length} failed notifications for retry`);
+      this.logger.log(
+        `Processing ${failedNotifications.length} failed notifications for retry`,
+      );
 
       // Process each failed notification for retry
       for (const notification of failedNotifications) {
@@ -88,23 +101,31 @@ export class NotificationDispatchService {
 
       this.logger.log('Failed notifications retry process completed');
     } catch (error) {
-      this.logger.error(`Error in failed notifications retry process: ${error.message}`);
+      this.logger.error(
+        `Error in failed notifications retry process: ${error.message}`,
+      );
     }
   }
-
 
   private async processNotification(notification: Notification): Promise<void> {
     try {
       // Ensure business relationship is populated
       if (!notification.business) {
-        this.logger.error(`Notification ${notification.id} has no business relationship. Skipping processing.`);
+        this.logger.error(
+          `Notification ${notification.id} has no business relationship. Skipping processing.`,
+        );
         return;
       }
 
-      this.logger.log(`Processing notification ${notification.id} for template '${notification.template}' (Business: ${notification.business.ggId})`);
+      this.logger.log(
+        `Processing notification ${notification.id} for template '${notification.template}' (Business: ${notification.business.ggId})`,
+      );
 
       // Step 1: Get template configuration from cache
-      const templateConfig = await this.templateConfigService.getTemplateConfig(notification.template);
+      const templateConfig = await this.templateConfigService.getTemplateConfig(
+        notification.template,
+      );
+
       if (!templateConfig) {
         await this.notificationService.markNotificationFailed(
           notification.id,
@@ -125,8 +146,10 @@ export class NotificationDispatchService {
       }
 
       // Step 3: Get the appropriate provider
-      const provider = this.providerFactory.createProvider(notification.channel);
-      
+      const provider = this.providerFactory.createProvider(
+        notification.channel,
+      );
+
       if (!provider.isAvailable()) {
         await this.notificationService.markNotificationFailed(
           notification.id,
@@ -137,8 +160,12 @@ export class NotificationDispatchService {
       }
 
       // Step 4: Process the notification
-      const result = await this.sendNotification(notification, templateConfig, provider);
-      
+      const result = await this.sendNotification(
+        notification,
+        templateConfig,
+        provider,
+      );
+
       if (result.success) {
         await this.notificationService.updateNotificationStatus(
           notification.id,
@@ -155,7 +182,9 @@ export class NotificationDispatchService {
         );
       }
     } catch (error) {
-      this.logger.error(`Error processing notification ${notification.id}: ${error.message}`);
+      this.logger.error(
+        `Error processing notification ${notification.id}: ${error.message}`,
+      );
       if (notification.business) {
         await this.notificationService.markNotificationFailed(
           notification.id,
@@ -163,7 +192,9 @@ export class NotificationDispatchService {
           error.message,
         );
       } else {
-        this.logger.error(`Cannot mark notification ${notification.id} as failed - no business relationship`);
+        this.logger.error(
+          `Cannot mark notification ${notification.id} as failed - no business relationship`,
+        );
       }
     }
   }
@@ -171,17 +202,23 @@ export class NotificationDispatchService {
   /**
    * Process a failed notification for retry
    */
-  private async processFailedNotificationForRetry(notification: Notification): Promise<void> {
+  private async processFailedNotificationForRetry(
+    notification: Notification,
+  ): Promise<void> {
     try {
       // Ensure business relationship is populated
       if (!notification.business) {
-        this.logger.error(`Failed notification ${notification.id} has no business relationship. Skipping retry.`);
+        this.logger.error(
+          `Failed notification ${notification.id} has no business relationship. Skipping retry.`,
+        );
         return;
       }
 
       // Check if notification is within retry threshold
       if (notification.retryCount >= this.maxRetryCount) {
-        this.logger.warn(`Notification ${notification.id} has exceeded max retry count (${this.maxRetryCount}), skipping retry`);
+        this.logger.warn(
+          `Notification ${notification.id} has exceeded max retry count (${this.maxRetryCount}), skipping retry`,
+        );
         return;
       }
 
@@ -196,14 +233,16 @@ export class NotificationDispatchService {
         return;
       }
 
-      this.logger.log(`Retrying failed notification ${notification.id} (Attempt ${notification.retryCount + 1}/${this.maxRetryCount})`);
+      this.logger.log(
+        `Retrying failed notification ${notification.id} (Attempt ${notification.retryCount + 1}/${this.maxRetryCount})`,
+      );
 
       // Reset status to pending for retry
       await this.notificationService.updateNotificationStatus(
         notification.id,
         notification.business.ggId,
         NotificationStatus.PENDING,
-        { 
+        {
           lastRetryAt: now,
           errorMessage: undefined, // Clear previous error
         },
@@ -211,9 +250,10 @@ export class NotificationDispatchService {
 
       // Process the notification again
       await this.processNotification(notification);
-
     } catch (error) {
-      this.logger.error(`Error processing failed notification ${notification.id} for retry: ${error.message}`);
+      this.logger.error(
+        `Error processing failed notification ${notification.id} for retry: ${error.message}`,
+      );
     }
   }
 
@@ -228,7 +268,9 @@ export class NotificationDispatchService {
     try {
       // Ensure business relationship is populated
       if (!notification.business) {
-        throw new Error(`Notification ${notification.id} has no business relationship`);
+        throw new Error(
+          `Notification ${notification.id} has no business relationship`,
+        );
       }
 
       // Process template variables using Mustache
@@ -265,26 +307,37 @@ export class NotificationDispatchService {
   ): Promise<Record<string, any>> {
     try {
       const channelConfig = templateConfig.channels?.[channel];
+
       if (!channelConfig) {
         throw new Error(`No configuration found for channel ${channel}`);
       }
 
       // Load template file if specified
       let templateContent = '';
+
       if (channelConfig.textTemplateSource) {
         try {
           // Use the correct path resolution for template files
-          const templatePath = path.join(process.cwd(), 'src/notifications/templates', channelConfig.textTemplateSource);
+          const templatePath = path.join(
+            process.cwd(),
+            'src/notifications/templates',
+            channelConfig.textTemplateSource,
+          );
+
           templateContent = await fs.readFile(templatePath, 'utf-8');
         } catch (error) {
-          this.logger.warn(`Could not load template file: ${channelConfig.textTemplateSource}`);
+          this.logger.warn(
+            `Could not load template file: ${channelConfig.textTemplateSource}`,
+          );
         }
       }
 
       // Process variables using Mustache
       const processedVariables: Record<string, any> = {};
-      
-      for (const [key, value] of Object.entries(channelConfig.twilioContentVariables || {})) {
+
+      for (const [key, value] of Object.entries(
+        channelConfig.twilioContentVariables || {},
+      )) {
         if (typeof value === 'string' && value.includes('{{')) {
           // Use Mustache to process the template
           processedVariables[key] = Mustache.render(value, variables);
@@ -295,12 +348,17 @@ export class NotificationDispatchService {
 
       // If we have a template file, process it too
       if (templateContent) {
-        processedVariables.templateContent = Mustache.render(templateContent, variables);
+        processedVariables.templateContent = Mustache.render(
+          templateContent,
+          variables,
+        );
       }
 
       return processedVariables;
     } catch (error) {
-      this.logger.error(`Error processing template variables: ${error.message}`);
+      this.logger.error(
+        `Error processing template variables: ${error.message}`,
+      );
       return variables; // Return original variables as fallback
     }
   }
@@ -321,8 +379,15 @@ export class NotificationDispatchService {
     totalPending: number;
     totalFailed: number;
     totalRetryable: number;
-    providers: Record<string, { available: boolean; configRequirements: string[] }>;
-    templateCache: { templateCount: number; initialized: boolean; templateNames: string[] };
+    providers: Record<
+      string,
+      { available: boolean; configRequirements: string[] }
+    >;
+    templateCache: {
+      templateCount: number;
+      initialized: boolean;
+      templateNames: string[];
+    };
     lastProcessed: Date;
     retryConfig: { maxRetryCount: number; retryDelayMinutes: number };
   }> {
@@ -371,18 +436,26 @@ export class NotificationDispatchService {
     averageRetryCount: number;
   }> {
     const whereClause = businessId ? { businessId } : {};
-    
+
     const failedNotifications = await this.em.find(Notification, {
       ...whereClause,
       status: NotificationStatus.FAILED,
     });
 
     const totalFailed = failedNotifications.length;
-    const retryableCount = failedNotifications.filter(n => n.retryCount < this.maxRetryCount).length;
-    const maxRetryExceeded = failedNotifications.filter(n => n.retryCount >= this.maxRetryCount).length;
-    
-    const totalRetryCount = failedNotifications.reduce((sum, n) => sum + (n.retryCount || 0), 0);
-    const averageRetryCount = totalFailed > 0 ? totalRetryCount / totalFailed : 0;
+    const retryableCount = failedNotifications.filter(
+      (n) => n.retryCount < this.maxRetryCount,
+    ).length;
+    const maxRetryExceeded = failedNotifications.filter(
+      (n) => n.retryCount >= this.maxRetryCount,
+    ).length;
+
+    const totalRetryCount = failedNotifications.reduce(
+      (sum, n) => sum + (n.retryCount || 0),
+      0,
+    );
+    const averageRetryCount =
+      totalFailed > 0 ? totalRetryCount / totalFailed : 0;
 
     return {
       totalFailed,

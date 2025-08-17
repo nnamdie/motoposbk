@@ -1,8 +1,12 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+
 import { NotificationChannel } from '../enums/notification-channel.enum';
+import {
+  SendNotificationRequest,
+  SendNotificationResult,
+} from '../models/notification-provider.interface';
 import { AbstractNotificationProvider } from './abstract-notification-provider';
-import { SendNotificationRequest, SendNotificationResult } from '../models/notification-provider.interface';
 
 @Injectable()
 export class TwilioWhatsAppProvider extends AbstractNotificationProvider {
@@ -21,14 +25,18 @@ export class TwilioWhatsAppProvider extends AbstractNotificationProvider {
       this.logger.log(`Sending WhatsApp notification to ${request.receiver}`);
 
       // TODO: Implement actual Twilio WhatsApp API call
-      this.logger.log(`WhatsApp notification sent successfully to ${request.receiver}`);
-      
+      this.logger.log(
+        `WhatsApp notification sent successfully to ${request.receiver}`,
+      );
+
       return {
         success: true,
         externalId: `twilio-${Date.now()}`,
       };
     } catch (error) {
-      this.logger.error(`Failed to send WhatsApp notification: ${error.message}`);
+      this.logger.error(
+        `Failed to send WhatsApp notification: ${error.message}`,
+      );
       return {
         success: false,
         errorMessage: error.message,
@@ -54,6 +62,7 @@ export class TwilioWhatsAppProvider extends AbstractNotificationProvider {
 
   private getAccountSid(): string {
     const sid = this.configService.get<string>('TWILIO_ACCOUNT_SID');
+
     if (!sid) {
       throw new Error('Twilio account SID not configured');
     }
@@ -62,6 +71,7 @@ export class TwilioWhatsAppProvider extends AbstractNotificationProvider {
 
   private getAuthToken(): string {
     const token = this.configService.get<string>('TWILIO_AUTH_TOKEN');
+
     if (!token) {
       throw new Error('Twilio auth token not configured');
     }
@@ -70,6 +80,7 @@ export class TwilioWhatsAppProvider extends AbstractNotificationProvider {
 
   private getWhatsAppFrom(): string {
     const from = this.configService.get<string>('TWILIO_WHATSAPP_FROM');
+
     if (!from) {
       throw new Error('Twilio WhatsApp from number not configured');
     }

@@ -1,4 +1,4 @@
-import { EntityRepository, EntityManager, LockMode } from '@mikro-orm/core';
+import { EntityManager, EntityRepository, LockMode } from '@mikro-orm/core';
 import { InjectRepository } from '@mikro-orm/nestjs';
 import {
   BadRequestException,

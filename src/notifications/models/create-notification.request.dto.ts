@@ -1,7 +1,16 @@
-import { IsEnum, IsOptional, IsNotEmpty, IsObject, IsString, IsDateString } from 'class-validator';
-import { NotificationChannel } from '../enums/notification-channel.enum';
+import {
+  IsDateString,
+  IsEnum,
+  IsNotEmpty,
+  IsObject,
+  IsOptional,
+  IsString,
+} from 'class-validator';
+
 import { User } from '@/auth/entities/user.entity';
 import { Business } from '@/business/entities/business.entity';
+
+import { NotificationChannel } from '../enums/notification-channel.enum';
 
 export class CreateNotificationRequestDto {
   @IsNotEmpty()

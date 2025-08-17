@@ -1,4 +1,4 @@
-import { EntityRepository, EntityManager } from '@mikro-orm/core';
+import { EntityManager, EntityRepository } from '@mikro-orm/core';
 import { InjectRepository } from '@mikro-orm/nestjs';
 import {
   ConflictException,
@@ -9,23 +9,24 @@ import {
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 
+import { AuthenticatedUser } from '@/common/decorators/current-user.decorator';
+import { NotificationChannel } from '@/notifications/enums/notification-channel.enum';
+import { NotificationService } from '@/notifications/services/notification.service';
+
 import {
   Business,
   BusinessStatus,
 } from '../../business/entities/business.entity';
 import { generateBusinessId } from '../../common/utils/helpers';
+import { AuthOtp } from '../entities/auth-otp.entity';
 import { Member } from '../entities/member.entity';
 import { User } from '../entities/user.entity';
-import { AuthOtp } from '../entities/auth-otp.entity';
 import { LoginResponseDto } from '../models/login.response.dto';
 import { RegisterBusinessRequestDto } from '../models/register-business.request.dto';
 import { RegisterBusinessResponseDto } from '../models/register-business.response.dto';
 import { RequestOtpRequestDto } from '../models/request-otp.request.dto';
-import { VerifyOtpRequestDto } from '../models/verify-otp.request.dto';
 import { UserProfileDto } from '../models/user-profile.response.dto';
-import { AuthenticatedUser } from '@/common/decorators/current-user.decorator';
-import { NotificationService } from '@/notifications/services/notification.service';
-import { NotificationChannel } from '@/notifications/enums/notification-channel.enum';
+import { VerifyOtpRequestDto } from '../models/verify-otp.request.dto';
 
 @Injectable()
 export class AuthService {
@@ -144,9 +145,10 @@ export class AuthService {
     userId: number,
     businessId: string,
   ): Promise<Member | null> {
-    return this.memberRepository.findOne(
-      { user: { id: userId }, business: { ggId: businessId } },
-    );
+    return this.memberRepository.findOne({
+      user: { id: userId },
+      business: { ggId: businessId },
+    });
   }
 
   async getProfile(
@@ -168,9 +170,10 @@ export class AuthService {
     const user = await this.userRepository.findOne({ id: currentUser.id });
 
     // Find membership
-    const member = await this.memberRepository.findOne(
-      { user: currentUser, business: business },
-    );
+    const member = await this.memberRepository.findOne({
+      user: currentUser,
+      business: business,
+    });
 
     if (!member || member.status !== 'Active') {
       throw new UnauthorizedException(
@@ -242,9 +245,10 @@ export class AuthService {
     }
 
     // Find membership
-    const member = await this.memberRepository.findOne(
-      { user: user, business: business },
-    );
+    const member = await this.memberRepository.findOne({
+      user: user,
+      business: business,
+    });
 
     if (!member || member.status !== 'Active') {
       throw new UnauthorizedException(
@@ -282,24 +286,24 @@ export class AuthService {
 
     await this.em.persistAndFlush(authOtp);
 
-          // Send OTP notification
-      try {
-        await this.notificationService.queueNotification({
-          receiver: user,
-          business: business,
-          template: 'login-otp',
-          variables: {
-            otpCode,
-            firstName: user.firstName,
-            businessName: business.name,
-          },
-          channel: NotificationChannel.WHATSAPP, // Default to SMS, could be configurable
-          sendAt: new Date(),
-        });
-      } catch (error) {
-        // Log error but don't fail the request
-        console.error('Failed to send OTP notification:', error);
-      }
+    // Send OTP notification
+    try {
+      await this.notificationService.queueNotification({
+        receiver: user,
+        business: business,
+        template: 'login-otp',
+        variables: {
+          otpCode,
+          firstName: user.firstName,
+          businessName: business.name,
+        },
+        channel: NotificationChannel.WHATSAPP, // Default to SMS, could be configurable
+        sendAt: new Date(),
+      });
+    } catch (error) {
+      // Log error but don't fail the request
+      console.error('Failed to send OTP notification:', error);
+    }
 
     return {
       success: true,
@@ -356,7 +360,9 @@ export class AuthService {
     if (authOtp.attempts >= authOtp.maxAttempts) {
       authOtp.isExpired = true;
       await this.em.flush();
-      throw new UnauthorizedException('OTP code has been blocked due to too many attempts');
+      throw new UnauthorizedException(
+        'OTP code has been blocked due to too many attempts',
+      );
     }
 
     // Increment attempts

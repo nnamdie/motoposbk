@@ -15,6 +15,8 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 
+import { ApiPaginatedResponse } from '@/common/decorators/api-paginated-response.decorator';
+
 import {
   PERMISSIONS,
   RequirePermissions,
@@ -41,7 +43,6 @@ import { CreateReservationRequestDto } from '../models/create-reservation.reques
 import { ItemResponseDto } from '../models/item.response.dto';
 import { StockEntryResponseDto } from '../models/stock-entry.response.dto';
 import { InventoryService } from '../services/inventory.service';
-import { ApiPaginatedResponse } from '@/common/decorators/api-paginated-response.decorator';
 
 @ApiTags('Inventory')
 @Controller('business/:businessGgId/inventory')

@@ -8,6 +8,7 @@ import {
 } from '@mikro-orm/core';
 
 import { TenantEntity } from '@/business/entities/tenant.entity';
+
 import { Gender } from '../enums/gender.enum';
 
 @Entity({ tableName: 'customers' })

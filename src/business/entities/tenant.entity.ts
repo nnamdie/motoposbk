@@ -1,7 +1,9 @@
-import { Entity, ManyToOne } from "@mikro-orm/core";
-import { BaseEntity } from "@/common/entities/base.entity";
-import { Business } from "./business.entity";
-import { User } from "@/auth/entities/user.entity";
+import { Entity, ManyToOne } from '@mikro-orm/core';
+
+import { User } from '@/auth/entities/user.entity';
+import { BaseEntity } from '@/common/entities/base.entity';
+
+import { Business } from './business.entity';
 
 @Entity({ abstract: true })
 export abstract class TenantEntity extends BaseEntity {

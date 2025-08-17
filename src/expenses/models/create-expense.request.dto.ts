@@ -1,12 +1,12 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
+  IsEnum,
   IsNotEmpty,
   IsNumber,
-  IsString,
   IsOptional,
-  IsEnum,
-  Min,
+  IsString,
   MaxLength,
+  Min,
 } from 'class-validator';
 
 import { ExpenseCategory } from '../enums/expense-category.enum';

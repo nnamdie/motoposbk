@@ -1,7 +1,8 @@
-import { Entity, PrimaryKey, Property, ManyToOne, Index } from '@mikro-orm/core';
+import { Entity, Index, ManyToOne, Property } from '@mikro-orm/core';
+
+import { Business } from '../../business/entities/business.entity';
 import { BaseEntity } from '../../common/entities/base.entity';
 import { User } from './user.entity';
-import { Business } from '../../business/entities/business.entity';
 
 @Entity()
 @Index({ properties: ['phone', 'business', 'isUsed'] })

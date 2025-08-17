@@ -7,6 +7,7 @@ import {
 } from '@mikro-orm/core';
 
 import { TenantEntity } from '@/business/entities/tenant.entity';
+
 import { Member } from './member.entity';
 import { Permission } from './permission.entity';
 

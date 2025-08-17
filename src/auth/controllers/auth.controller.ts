@@ -1,6 +1,12 @@
 import { Body, Controller, Get, Param, Post, UseGuards } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 
+import { ApiBaseResponse } from '@/common/decorators/base-response.decorator';
+import {
+  AuthenticatedUser,
+  CurrentUser,
+} from '@/common/decorators/current-user.decorator';
+
 import {
   BaseResponseDto,
   ValidationErrorDto,
@@ -11,11 +17,9 @@ import { RegisterBusinessRequestDto } from '../models/register-business.request.
 import { RegisterBusinessResponseDto } from '../models/register-business.response.dto';
 import { RequestOtpRequestDto } from '../models/request-otp.request.dto';
 import { RequestOtpResponseDto } from '../models/request-otp.response.dto';
+import { UserProfileDto } from '../models/user-profile.response.dto';
 import { VerifyOtpRequestDto } from '../models/verify-otp.request.dto';
 import { AuthService } from '../services/auth.service';
-import { UserProfileDto } from '../models/user-profile.response.dto';
-import { AuthenticatedUser, CurrentUser } from '@/common/decorators/current-user.decorator';
-import { ApiBaseResponse } from '@/common/decorators/base-response.decorator';
 
 @ApiTags('Authentication')
 @Controller()
@@ -59,7 +63,8 @@ export class AuthController {
   @UseGuards(TenantResolveGuard)
   @ApiOperation({
     summary: 'Request OTP for member login',
-    description: 'Request an OTP code to be sent to the member\'s phone for authentication',
+    description:
+      "Request an OTP code to be sent to the member's phone for authentication",
   })
   @ApiBaseResponse({
     status: 200,
@@ -97,7 +102,8 @@ export class AuthController {
   @UseGuards(TenantResolveGuard)
   @ApiOperation({
     summary: 'Verify OTP and complete member login',
-    description: 'Verify the OTP code and complete authentication to access a specific business account',
+    description:
+      'Verify the OTP code and complete authentication to access a specific business account',
   })
   @ApiBaseResponse({
     status: 200,
