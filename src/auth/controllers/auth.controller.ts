@@ -1,4 +1,4 @@
-import { Body, Controller, Param, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, UseGuards } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 
 import {
@@ -11,6 +11,8 @@ import { LoginResponseDto } from '../models/login.response.dto';
 import { RegisterBusinessRequestDto } from '../models/register-business.request.dto';
 import { RegisterBusinessResponseDto } from '../models/register-business.response.dto';
 import { AuthService } from '../services/auth.service';
+import { UserProfileDto } from '../models/user-profile.response.dto';
+import { AuthenticatedUser, CurrentUser } from '@/common/decorators/current-user.decorator';
 
 @ApiTags('Authentication')
 @Controller()
@@ -84,6 +86,22 @@ export class AuthController {
       success: true,
       data: result,
       message: 'Login successful',
+      timestamp: new Date().toISOString(),
+    };
+  }
+
+  @Get('business/:businessGgId/profile')
+  @UseGuards(TenantResolveGuard)
+  async getProfile(
+    @Param('businessGgId') businessGgId: string,
+    @CurrentUser() currentUser: AuthenticatedUser,
+  ): Promise<BaseResponseDto<UserProfileDto>> {
+    const result = await this.authService.getProfile(businessGgId, currentUser);
+
+    return {
+      success: true,
+      data: result,
+      message: 'Profile retrieved successfully',
       timestamp: new Date().toISOString(),
     };
   }

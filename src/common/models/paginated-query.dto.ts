@@ -30,6 +30,11 @@ export class PaginatedQueryDto {
   @IsOptional()
   search?: string;
 
+  @ApiPropertyOptional({ example: 'status' })
+  @IsOptional()
+  status?: string;
+  
+
   get offset(): number {
     return (this.page - 1) * this.limit;
   }

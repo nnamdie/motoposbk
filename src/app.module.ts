@@ -7,6 +7,7 @@ import { AuthModule } from './auth/auth.module';
 import { BusinessModule } from './business/business.module';
 import { CommonModule } from './common/common.module';
 import { DatabaseConfig } from './config/database.config';
+import { ExpenseModule } from './expenses/expense.module';
 import { HealthModule } from './health/health.module';
 import { InventoryModule } from './inventory/inventory.module';
 import { OrdersModule } from './orders/orders.module';
@@ -27,6 +28,7 @@ import { OrdersModule } from './orders/orders.module';
     HealthModule,
     AuthModule,
     BusinessModule,
+    ExpenseModule,
     InventoryModule,
     OrdersModule,
   ],

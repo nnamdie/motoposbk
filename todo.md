@@ -30,7 +30,7 @@
 - [x] Customer entity
 - [x] Order and OrderItem entities
 - [x] Invoice and Payment entities
-- [ ] Expense entity
+- [x] Expense entity
 - [ ] Notification and AuditLog entities
 
 ### API Endpoints
@@ -40,6 +40,7 @@
 - [x] Item management endpoints
 - [x] Stock management endpoints
 - [x] Order management endpoints
+- [x] Expense management endpoints
 - [ ] Invoice generation endpoints
 - [ ] Payment webhook endpoints
 
@@ -52,8 +53,8 @@
 
 ### Notification System
 - [ ] Notification provider interface
-- [ ] WhatsApp adapter implementation
-- [ ] SMS adapter implementation
+- [ ] WhatsApp(Twilio) adapter implementation
+- [ ] SMS(Twilio) adapter implementation
 - [ ] Event-driven notifications
 - [ ] Notification templates
 

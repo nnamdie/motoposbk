@@ -20,6 +20,8 @@ import { LoginRequestDto } from '../models/login.request.dto';
 import { LoginResponseDto } from '../models/login.response.dto';
 import { RegisterBusinessRequestDto } from '../models/register-business.request.dto';
 import { RegisterBusinessResponseDto } from '../models/register-business.response.dto';
+import { UserProfileDto } from '../models/user-profile.response.dto';
+import { AuthenticatedUser } from '@/common/decorators/current-user.decorator';
 
 @Injectable()
 export class AuthService {
@@ -190,40 +192,10 @@ export class AuthService {
       expiresIn: this.configService.get('JWT_REFRESH_EXPIRES_IN'),
     });
 
-    // Get permissions from roles and direct permissions
-    const rolePermissions = member.roles
-      .getItems()
-      .flatMap((role) => role.permissions.getItems().map((p) => p.key));
-
-    const directPermissions = member.directPermissions
-      .getItems()
-      .map((p) => p.key);
-
-    const allPermissions = [
-      ...new Set([...rolePermissions, ...directPermissions]),
-    ];
-    const roles = member.roles.getItems().map((role) => role.name);
 
     return {
       accessToken,
       refreshToken,
-      expiresIn: 3600, // 1 hour
-      user: {
-        id: user.id,
-        firstName: user.firstName,
-        lastName: user.lastName,
-        phone: user.phone,
-        avatar: user.avatar,
-      },
-      business: {
-        ggId: business.ggId,
-        name: business.name,
-        status: business.status,
-        position: member.position,
-        isOwner: member.isOwner,
-      },
-      permissions: allPermissions,
-      roles,
     };
   }
 
@@ -247,5 +219,67 @@ export class AuthService {
         ],
       },
     );
+  }
+
+  async getProfile(
+    businessGgId: string,
+    currentUser: AuthenticatedUser,
+  ): Promise<UserProfileDto> {
+    const business = await this.businessRepository.findOne({
+      ggId: businessGgId,
+    });
+
+    if (!business) {
+      throw new NotFoundException('Business not found');
+    }
+
+    if (business.status !== BusinessStatus.ACTIVE) {
+      throw new UnauthorizedException('Business is not active');
+    }
+
+    const user = await this.userRepository.findOne({ id: currentUser.id });
+
+    // Find membership
+    const member = await this.memberRepository.findOne(
+      { userId: currentUser.id, businessId: business.ggId },
+      { populate: ['roles', 'roles.permissions', 'directPermissions'] },
+    );
+
+    if (!member || member.status !== 'Active') {
+      throw new UnauthorizedException(
+        'User is not a member of this business or membership is not active',
+      );
+    }
+
+    // Get permissions from roles and direct permissions
+    const rolePermissions = member.roles
+      .getItems()
+      .flatMap((role) => role.permissions.getItems().map((p) => p.key));
+
+    const directPermissions = member.directPermissions
+      .getItems()
+      .map((p) => p.key);
+
+    const allPermissions = [
+      ...new Set([...rolePermissions, ...directPermissions]),
+    ];
+    const roles = member.roles.getItems().map((role) => role.name);
+
+    return {
+      id: user.id,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      phone: user.phone,
+      avatar: user.avatar,
+      permissions: allPermissions,
+      roles,
+      business: {
+        ggId: business.ggId,
+        name: business.name,
+        status: business.status,
+        position: member.position,
+        isOwner: member.isOwner,
+      },
+    };
   }
 }

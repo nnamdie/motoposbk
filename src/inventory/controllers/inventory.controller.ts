@@ -41,6 +41,7 @@ import { CreateReservationRequestDto } from '../models/create-reservation.reques
 import { ItemResponseDto } from '../models/item.response.dto';
 import { StockEntryResponseDto } from '../models/stock-entry.response.dto';
 import { InventoryService } from '../services/inventory.service';
+import { ApiPaginatedResponse } from '@/common/decorators/api-paginated-response.decorator';
 
 @ApiTags('Inventory')
 @Controller('business/:businessGgId/inventory')
@@ -85,10 +86,9 @@ export class InventoryController {
     summary: 'Get items',
     description: 'Retrieve paginated list of inventory items',
   })
-  @ApiResponse({
-    status: 200,
+  @ApiPaginatedResponse({
+    model: ItemResponseDto,
     description: 'Items retrieved successfully',
-    type: PaginatedResponseDto<ItemResponseDto>,
   })
   async getItems(
     @GetTenantContext() tenantContext: TenantContext,
