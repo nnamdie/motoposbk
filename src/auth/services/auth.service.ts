@@ -21,13 +21,13 @@ import { generateBusinessId } from '../../common/utils/helpers';
 import { AuthOtp } from '../entities/auth-otp.entity';
 import { Member } from '../entities/member.entity';
 import { User } from '../entities/user.entity';
+import { MemberStatus } from '../enums/member-status.enum';
 import { LoginResponseDto } from '../models/login.response.dto';
 import { RegisterBusinessRequestDto } from '../models/register-business.request.dto';
 import { RegisterBusinessResponseDto } from '../models/register-business.response.dto';
 import { RequestOtpRequestDto } from '../models/request-otp.request.dto';
 import { UserProfileDto } from '../models/user-profile.response.dto';
 import { VerifyOtpRequestDto } from '../models/verify-otp.request.dto';
-import { MemberStatus } from '../enums/member-status.enum';
 
 @Injectable()
 export class AuthService {
