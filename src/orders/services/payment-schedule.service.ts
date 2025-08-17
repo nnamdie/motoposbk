@@ -73,9 +73,9 @@ export class PaymentScheduleService {
         i === numberOfInstallments ? lastInstallmentAmount : installmentAmount;
 
       const schedule = manager.create(PaymentSchedule, {
-        businessId,
+        business: { ggId: businessId },
         invoice,
-        invoiceId: invoice.id,
+
         installmentNumber: i,
         dueDate,
         amountDue: amount,
@@ -150,8 +150,8 @@ export class PaymentScheduleService {
       const schedules = await em.find(
         PaymentSchedule,
         {
-          businessId,
-          invoiceId,
+          business: { ggId: businessId },
+          invoice: { id: invoiceId },
           status: {
             $in: [
               ScheduleStatus.PENDING,
@@ -217,8 +217,8 @@ export class PaymentScheduleService {
 
       // Check if invoice is fully paid
       const allSchedules = await em.find(PaymentSchedule, {
-        businessId,
-        invoiceId,
+        business: { ggId: businessId },
+        invoice: { id: invoiceId },
       });
 
       const invoiceFullyPaid = allSchedules.every((s) => s.isFullyPaid);
@@ -227,7 +227,7 @@ export class PaymentScheduleService {
       if (invoiceFullyPaid) {
         const invoice = await em.findOneOrFail(Invoice, {
           id: invoiceId,
-          businessId,
+          business: { ggId: businessId },
         });
 
         invoice.paidAmount = invoice.total;
@@ -254,7 +254,7 @@ export class PaymentScheduleService {
     invoiceId: number,
   ): Promise<PaymentSchedule[]> {
     return await this.scheduleRepository.find(
-      { businessId, invoiceId },
+      { business: { ggId: businessId }, invoice: { id: invoiceId } },
       { orderBy: { installmentNumber: 'ASC' } },
     );
   }
@@ -264,7 +264,7 @@ export class PaymentScheduleService {
    */
   async updateOverdueStatuses(businessId: string): Promise<void> {
     const potentiallyOverdueSchedules = await this.scheduleRepository.find({
-      businessId,
+      business: { ggId: businessId },
       dueDate: { $lt: new Date() },
       status: { $in: [ScheduleStatus.PENDING, ScheduleStatus.PARTIAL_PAID] },
     });
@@ -300,8 +300,8 @@ export class PaymentScheduleService {
   ): Promise<PaymentSchedule | null> {
     const nextSchedule = await this.scheduleRepository.findOne(
       {
-        businessId,
-        invoiceId,
+        business: { ggId: businessId },
+        invoice: { id: invoiceId },
         installmentNumber: { $gt: installmentNumber },
         status: { $in: [ScheduleStatus.PENDING, ScheduleStatus.PARTIAL_PAID] },
       },
@@ -379,7 +379,7 @@ export class PaymentScheduleService {
   ): PaymentScheduleResponseDto {
     return {
       id: schedule.id,
-      invoiceId: schedule.invoiceId,
+      invoiceId: schedule.invoice.id,
       installmentNumber: schedule.installmentNumber,
       dueDate: schedule.dueDate.toISOString().split('T')[0], // YYYY-MM-DD format
       amountDue: schedule.amountDue,

@@ -1,18 +1,15 @@
 import { Entity, Enum, ManyToOne, Property, Unique } from '@mikro-orm/core';
 
 import { User } from '../../auth/entities/user.entity';
-import { TenantEntity } from '../../common/entities/base.entity';
+import { TenantEntity } from '@/business/entities/tenant.entity';
 import { ScheduleStatus } from '../enums/schedule-status.enum';
 import { Invoice } from './invoice.entity';
 
 @Entity({ tableName: 'payment_schedules' })
-@Unique({ properties: ['businessId', 'invoice', 'installmentNumber'] })
+@Unique({ properties: ['business', 'invoice', 'installmentNumber'] })
 export class PaymentSchedule extends TenantEntity {
-  @ManyToOne(() => Invoice, { onDelete: 'cascade' })
+  @ManyToOne(() => Invoice)
   invoice!: Invoice;
-
-  @Property({ type: 'int' })
-  invoiceId!: number;
 
   @Property({ type: 'int' })
   installmentNumber!: number; // 1, 2, 3, 4...

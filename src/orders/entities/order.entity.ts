@@ -9,7 +9,7 @@ import {
 } from '@mikro-orm/core';
 
 import { User } from '../../auth/entities/user.entity';
-import { TenantEntity } from '../../common/entities/base.entity';
+import { TenantEntity } from '@/business/entities/tenant.entity';
 import { OrderStatus } from '../enums/order-status.enum';
 import { OrderType } from '../enums/order-type.enum';
 import { Customer } from './customer.entity';
@@ -17,16 +17,13 @@ import { Invoice } from './invoice.entity';
 import { OrderItem } from './order-item.entity';
 
 @Entity({ tableName: 'orders' })
-@Unique({ properties: ['businessId', 'orderNumber'] })
+@Unique({ properties: ['business', 'orderNumber'] })
 export class Order extends TenantEntity {
   @Property({ type: 'varchar', length: 50 })
   orderNumber!: string; // Auto-generated unique order number
 
   @ManyToOne(() => Customer)
   customer!: Customer;
-
-  @Property({ type: 'int' })
-  customerId!: number;
 
   @Enum({ items: () => OrderType, default: OrderType.REGULAR })
   type: OrderType = OrderType.REGULAR;

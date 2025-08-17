@@ -1,6 +1,6 @@
 import { Entity, ManyToOne, Property, Unique } from '@mikro-orm/core';
 
-import { TenantEntity } from '../../common/entities/base.entity';
+import { TenantEntity } from '@/business/entities/tenant.entity';
 import { Item } from './item.entity';
 
 @Entity({ tableName: 'item_attributes' })
@@ -21,7 +21,7 @@ export class ItemAttribute extends TenantEntity {
   @Property({ default: true })
   isActive!: boolean;
 
-  @ManyToOne(() => Item, { onDelete: 'cascade' })
+  @ManyToOne(() => Item)
   item!: Item;
 
   constructor(data?: Partial<ItemAttribute>) {

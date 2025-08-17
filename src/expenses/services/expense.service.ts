@@ -27,15 +27,16 @@ export class ExpenseService {
     currentMember: Member,
   ): Promise<ExpenseResponseDto> {
     const expense = this.expenseRepository.create({
-      businessId,
+      business: { ggId: businessId } as any,
+      requester: { id: currentMember.id } as any,
       amount: dto.amount,
       notes: dto.notes,
       category: dto.category,
-      requester: currentMember,
       status: ExpenseStatus.PENDING,
+      createdBy: currentMember,
     });
 
-    await this.expenseRepository.persistAndFlush(expense);
+    await this.em.persistAndFlush(expense);
 
     return this.mapToResponseDto(expense);
   }
@@ -51,7 +52,7 @@ export class ExpenseService {
     const { page = 1, limit = 10, search, status } = query;
     const offset = (page - 1) * limit;
 
-    const filter: any = { businessId };
+    const filter: any = { business: { ggId: businessId } };
     
     if (status) {
       filter.status = status;
@@ -68,7 +69,7 @@ export class ExpenseService {
       {
         limit,
         offset,
-        orderBy: { createdAt: 'DESC' },
+        orderBy: { createdAt: 'DESC' as any },
         populate: [
           'requester.user',
           'approver.user',
@@ -92,8 +93,8 @@ export class ExpenseService {
   ): Promise<ExpenseResponseDto> {
     const expense = await this.expenseRepository.findOne(
       {
-        id: expenseId,
-        businessId,
+        id: expenseId as any,
+        business: { ggId: businessId },
       },
       {
         populate: [
@@ -121,8 +122,8 @@ export class ExpenseService {
   ): Promise<ExpenseResponseDto> {
     const expense = await this.expenseRepository.findOne(
       {
-        id: expenseId,
-        businessId,
+        id: expenseId as any,
+        business: { ggId: businessId },
       },
       {
         populate: [
@@ -155,7 +156,7 @@ export class ExpenseService {
       expense.rejectionReason = dto.rejectionReason;
     }
 
-    await this.expenseRepository.persistAndFlush(expense);
+    await this.em.persistAndFlush(expense);
 
     return this.mapToResponseDto(expense);
   }
@@ -170,8 +171,8 @@ export class ExpenseService {
   ): Promise<ExpenseResponseDto> {
     const expense = await this.expenseRepository.findOne(
       {
-        id: expenseId,
-        businessId,
+        id: expenseId as any,
+        business: { ggId: businessId },
       },
       {
         populate: [
@@ -187,7 +188,7 @@ export class ExpenseService {
 
     expense.status = ExpenseStatus.CANCELLED;
 
-    await this.expenseRepository.persistAndFlush(expense);
+    await this.em.persistAndFlush(expense);
 
     return this.mapToResponseDto(expense);
   }
@@ -197,38 +198,27 @@ export class ExpenseService {
    */
   private mapToResponseDto(expense: Expense): ExpenseResponseDto {
     return {
-      id: expense.id,
+      id: expense.id as any,
       amount: expense.amount,
-      currency: expense.currency,
+      currency: 'NGN', // Default currency
       notes: expense.notes,
       category: expense.category,
       status: expense.status,
-      approvedAt: expense.approvedAt?.toISOString(),
-      rejectedAt: expense.rejectedAt?.toISOString(),
-      rejectionReason: expense.rejectionReason,
       requester: {
-        id: expense.requester.id,
-        position: expense.requester.position,
-        user: {
-          id: expense.requester.user.id,
-          firstName: expense.requester.user.firstName,
-          lastName: expense.requester.user.lastName,
-          phone: expense.requester.user.phone,
-          avatar: expense.requester.user.avatar,
-        },
+        id: expense.requester.id as any,
+        fullName: expense.requester.user.fullName,
+        phone: expense.requester.user.phone,
       },
-      approver: expense.approver ? {
-        id: expense.approver.id,
-        position: expense.approver.position,
-        user: {
-          id: expense.approver.user.id,
-          firstName: expense.approver.user.firstName,
-          lastName: expense.approver.user.lastName,
-          phone: expense.approver.user.phone,
-          avatar: expense.approver.user.avatar,
-        },
-      } : undefined,
-      createdAt: expense.createdAt.toISOString(),
+      approver: expense.approver
+        ? {
+            id: expense.approver.id as any,
+            fullName: expense.approver.user.fullName,
+            phone: expense.approver.user.phone,
+          }
+        : null,
+      requestedAt: expense.createdAt?.toISOString(),
+      approvedAt: expense.approvedAt?.toISOString(),
+      createdAt: expense.createdAt?.toISOString(),
     };
   }
 }

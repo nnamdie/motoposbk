@@ -1,7 +1,7 @@
 import { Entity, Enum, ManyToOne, Property, Unique } from '@mikro-orm/core';
 
 import { User } from '../../auth/entities/user.entity';
-import { TenantEntity } from '../../common/entities/base.entity';
+import { TenantEntity } from '@/business/entities/tenant.entity';
 import { PaymentMethod } from '../enums/payment-method.enum';
 import { PaymentStatus } from '../enums/payment-status.enum';
 import { PaymentType } from '../enums/payment-type.enum';
@@ -9,8 +9,8 @@ import { Customer } from './customer.entity';
 import { Invoice } from './invoice.entity';
 
 @Entity({ tableName: 'payments' })
-@Unique({ properties: ['businessId', 'paymentNumber'] })
-@Unique({ properties: ['businessId', 'externalReference'] })
+@Unique({ properties: ['business', 'paymentNumber'] })
+@Unique({ properties: ['business', 'externalReference'] })
 export class Payment extends TenantEntity {
   @Property({ type: 'varchar', length: 50 })
   paymentNumber!: string; // Auto-generated unique payment number
@@ -18,14 +18,8 @@ export class Payment extends TenantEntity {
   @ManyToOne(() => Invoice)
   invoice!: Invoice;
 
-  @Property({ type: 'int' })
-  invoiceId!: number;
-
   @ManyToOne(() => Customer)
   customer!: Customer;
-
-  @Property({ type: 'int' })
-  customerId!: number;
 
   @Property({ type: 'decimal', precision: 10, scale: 2 })
   amount!: number;

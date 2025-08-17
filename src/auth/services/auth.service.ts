@@ -1,4 +1,4 @@
-import { EntityRepository } from '@mikro-orm/core';
+import { EntityRepository, EntityManager } from '@mikro-orm/core';
 import { InjectRepository } from '@mikro-orm/nestjs';
 import {
   ConflictException,
@@ -22,6 +22,7 @@ import { RegisterBusinessRequestDto } from '../models/register-business.request.
 import { RegisterBusinessResponseDto } from '../models/register-business.response.dto';
 import { UserProfileDto } from '../models/user-profile.response.dto';
 import { AuthenticatedUser } from '@/common/decorators/current-user.decorator';
+import { NotificationService } from '@/notifications/services/notification.service';
 
 @Injectable()
 export class AuthService {
@@ -32,8 +33,10 @@ export class AuthService {
     private readonly memberRepository: EntityRepository<Member>,
     @InjectRepository(Business)
     private readonly businessRepository: EntityRepository<Business>,
+    private readonly em: EntityManager,
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
+    private readonly notificationService: NotificationService,
   ) {}
 
   async registerBusiness(
@@ -101,16 +104,14 @@ export class AuthService {
     // Create owner membership
     const member = this.memberRepository.create({
       user,
-      userId: user.id,
       business,
-      businessId: business.ggId,
       isOwner: true,
       status: 'Active' as any,
       joinedAt: new Date(),
       createdBy: user, // Pass the user entity, not ID
     });
 
-    await this.userRepository.persistAndFlush([user, business, member]);
+    await this.em.persistAndFlush([user, business, member]);
 
     return {
       business: {
@@ -163,7 +164,7 @@ export class AuthService {
 
     // Find membership
     const member = await this.memberRepository.findOne(
-      { userId: user.id, businessId: business.ggId },
+      { user: user, business: business },
       { populate: ['roles', 'roles.permissions', 'directPermissions'] },
     );
 
@@ -175,7 +176,7 @@ export class AuthService {
 
     // Update last login
     user.lastLoginAt = new Date();
-    await this.userRepository.flush();
+    await this.em.flush();
 
     // Generate tokens
     const payload = {
@@ -208,16 +209,7 @@ export class AuthService {
     businessId: string,
   ): Promise<Member | null> {
     return this.memberRepository.findOne(
-      { userId, businessId },
-      {
-        populate: [
-          'user',
-          'business',
-          'roles',
-          'roles.permissions',
-          'directPermissions',
-        ],
-      },
+      { user: { id: userId }, business: { ggId: businessId } },
     );
   }
 
@@ -241,8 +233,7 @@ export class AuthService {
 
     // Find membership
     const member = await this.memberRepository.findOne(
-      { userId: currentUser.id, businessId: business.ggId },
-      { populate: ['roles', 'roles.permissions', 'directPermissions'] },
+      { user: currentUser, business: business },
     );
 
     if (!member || member.status !== 'Active') {

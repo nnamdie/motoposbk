@@ -9,20 +9,17 @@ import {
 } from '@mikro-orm/core';
 
 import { Business } from '../../business/entities/business.entity';
-import { TenantEntity } from '../../common/entities/base.entity';
+import { TenantEntity } from '@/business/entities/tenant.entity';
 import { MemberStatus } from '../enums/member-status.enum';
 import { Permission } from './permission.entity';
 import { Role } from './role.entity';
 import { User } from './user.entity';
 
 @Entity({ tableName: 'members' })
-@Unique({ properties: ['businessId', 'userId'] })
+@Unique({ properties: ['business', 'user'] })
 export class Member extends TenantEntity {
   @ManyToOne(() => User, { eager: true })
   user!: User;
-
-  @Property({ type: 'int' })
-  userId!: number;
 
   @ManyToOne(() => Business)
   business!: Business;
@@ -42,10 +39,10 @@ export class Member extends TenantEntity {
   @Property({ type: 'timestamptz', nullable: true })
   leftAt?: Date;
 
-  @ManyToMany(() => Role, 'members', { owner: true })
+  @ManyToMany(() => Role)
   roles = new Collection<Role>(this);
 
-  @ManyToMany(() => Permission, 'members', { owner: true })
+  @ManyToMany(() => Permission)
   directPermissions = new Collection<Permission>(this);
 
   @Property({ type: 'json', nullable: true })

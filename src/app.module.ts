@@ -10,6 +10,7 @@ import { DatabaseConfig } from './config/database.config';
 import { ExpenseModule } from './expenses/expense.module';
 import { HealthModule } from './health/health.module';
 import { InventoryModule } from './inventory/inventory.module';
+import { NotificationsModule } from './notifications/notifications.module';
 import { OrdersModule } from './orders/orders.module';
 
 @Module({
@@ -30,6 +31,7 @@ import { OrdersModule } from './orders/orders.module';
     BusinessModule,
     ExpenseModule,
     InventoryModule,
+    NotificationsModule,
     OrdersModule,
   ],
   providers: [AppService],

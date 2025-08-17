@@ -7,7 +7,7 @@ import {
   OneToMany,
 } from '@mikro-orm/core';
 
-import { TenantEntity } from '../../common/entities/base.entity';
+import { TenantEntity } from '@/business/entities/tenant.entity';
 import { Member } from '../../auth/entities/member.entity';
 import { ExpenseStatus } from '../enums/expense-status.enum';
 import { ExpenseCategory } from '../enums/expense-category.enum';

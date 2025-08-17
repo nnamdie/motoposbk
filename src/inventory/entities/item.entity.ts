@@ -7,14 +7,14 @@ import {
   Unique,
 } from '@mikro-orm/core';
 
-import { TenantEntity } from '../../common/entities/base.entity';
+import { TenantEntity } from '@/business/entities/tenant.entity';
 import { ItemStatus } from '../enums/item-status.enum';
 import { ItemAttribute } from './item-attribute.entity';
 import { Reservation } from './reservation.entity';
 import { StockEntry } from './stock-entry.entity';
 
 @Entity({ tableName: 'items' })
-@Unique({ properties: ['businessId', 'sku'] })
+@Unique({ properties: ['business', 'sku'] })
 export class Item extends TenantEntity {
   @Property({ type: 'varchar', length: 50 })
   sku!: string; // Auto-generated based on item properties

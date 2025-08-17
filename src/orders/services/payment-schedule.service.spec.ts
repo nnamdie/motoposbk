@@ -18,13 +18,44 @@ describe('PaymentScheduleService', () => {
 
   const mockUser = {} as User;
 
-  const mockInvoice: Invoice = {
+  const mockInvoice = {
     id: 1,
     invoiceNumber: 'INV_001',
-    businessId: 'business_123',
+    business: { ggId: 'business_123' },
     total: 100000,
     currency: 'NGN',
-  } as Invoice;
+    order: { id: 1, orderNumber: 'ORD_001' } as any,
+    orderId: 1,
+    customer: { id: 1, firstName: 'John', lastName: 'Doe', phone: '1234567890' } as any,
+    customerId: 1,
+    type: 'STANDARD',
+    status: 'DRAFT',
+    issueDate: new Date(),
+    dueDate: new Date(),
+    subtotal: 100000,
+    taxAmount: 0,
+    discountAmount: 0,
+    shippingAmount: 0,
+    balanceAmount: 100000,
+    paidAmount: 0,
+    paidAt: undefined,
+    notes: '',
+    terms: '',
+    createdBy: mockUser,
+    updatedBy: undefined,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    payments: [],
+    paymentSchedules: [],
+    isFullyPaid: false,
+    isOverdue: false,
+    canBePaid: true,
+    canBeCancelled: true,
+    canBeEdited: true,
+    canBeVoided: true,
+    beforeCreate: jest.fn(),
+    beforeUpdate: jest.fn(),
+  } as any;
 
   const mockInstallmentPlan: InstallmentPlan = {
     totalAmount: 100000,
@@ -152,7 +183,7 @@ describe('PaymentScheduleService', () => {
       const result = await service.getPaymentSchedule('business_123', 1);
 
       expect(mockScheduleRepository.find).toHaveBeenCalledWith(
-        { businessId: 'business_123', invoiceId: 1 },
+        { business: { ggId: 'business_123' }, invoiceId: 1 },
         { orderBy: { installmentNumber: 'ASC' } },
       );
       expect(result).toHaveLength(2);
@@ -305,7 +336,7 @@ describe('PaymentScheduleService', () => {
             amountPaid: 20000,
             status: ScheduleStatus.PAID,
             dueDate: new Date('2024-02-01'),
-            invoiceId: 1,
+
             remainingBalance: 0,
             createdAt: new Date('2024-01-01'),
             updatedAt: new Date('2024-01-01'),

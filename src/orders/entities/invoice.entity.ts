@@ -9,7 +9,7 @@ import {
 } from '@mikro-orm/core';
 
 import { User } from '../../auth/entities/user.entity';
-import { TenantEntity } from '../../common/entities/base.entity';
+import { TenantEntity } from '@/business/entities/tenant.entity';
 import { InvoiceStatus } from '../enums/invoice-status.enum';
 import { InvoiceType } from '../enums/invoice-type.enum';
 import { Customer } from './customer.entity';
@@ -18,7 +18,7 @@ import { Payment } from './payment.entity';
 import { PaymentSchedule } from './payment-schedule.entity';
 
 @Entity({ tableName: 'invoices' })
-@Unique({ properties: ['businessId', 'invoiceNumber'] })
+@Unique({ properties: ['business', 'invoiceNumber'] })
 export class Invoice extends TenantEntity {
   @Property({ type: 'varchar', length: 50 })
   invoiceNumber!: string; // Auto-generated unique invoice number
@@ -26,14 +26,8 @@ export class Invoice extends TenantEntity {
   @ManyToOne(() => Order)
   order!: Order;
 
-  @Property({ type: 'int' })
-  orderId!: number;
-
   @ManyToOne(() => Customer)
   customer!: Customer;
-
-  @Property({ type: 'int' })
-  customerId!: number;
 
   @Enum({ items: () => InvoiceType, default: InvoiceType.STANDARD })
   type: InvoiceType = InvoiceType.STANDARD;

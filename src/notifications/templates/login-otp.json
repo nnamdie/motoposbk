@@ -1,0 +1,24 @@
+{
+  "variables": {
+    "firstName": "string",
+    "otpCode": "number"
+  },
+  "channels": {
+    "whatsapp": {
+      "textTemplateSource": "login-otp.whatsapp.txt",
+      "twilioContentSid": "WAc8025851e979b64b81caf183d020d50f",
+      "twilioContentVariables": {
+        "1": "{{firstName}}",
+        "2": "{{otpCode}}"
+      }
+    },
+    "sms": {
+      "textTemplateSource": "login-otp.sms.txt",
+      "twilioContentSid": "SMSc8025851e979b64b81caf183d020d50f",
+      "twilioContentVariables": {
+        "1": "{{firstName}}",
+        "2": "{{otpCode}}"
+      }
+    }
+  }
+}

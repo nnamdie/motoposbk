@@ -29,15 +29,3 @@ export abstract class BaseEntity {
     this.updatedAt = new Date();
   }
 }
-
-@Entity({ abstract: true })
-export abstract class TenantEntity extends BaseEntity {
-  @Property({ type: 'varchar', length: 6 })
-  businessId!: string; // Keep as string since it's the business ggId (e.g., "ABC123")
-
-  @ManyToOne(() => 'User', { nullable: true })
-  createdBy?: any; // Using 'any' to avoid circular dependency - will be integer ID
-
-  @ManyToOne(() => 'User', { nullable: true })
-  updatedBy?: any; // Using 'any' to avoid circular dependency - will be integer ID
-}

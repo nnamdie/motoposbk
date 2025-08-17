@@ -75,7 +75,7 @@ export class OrdersService {
     const itemIds = dto.items.map((item) => item.itemId);
     const items = await this.itemRepository.find({
       id: { $in: itemIds },
-      businessId,
+      business: { ggId: businessId },
     });
 
     if (items.length !== itemIds.length) {
@@ -171,10 +171,9 @@ export class OrdersService {
 
       // Create order
       const order = em.create(Order, {
-        businessId,
+        business: { ggId: businessId },
         orderNumber: generateReference('ORD'),
         customer,
-        customerId: customer.id,
         type:
           dto.type || (isPreOrder ? OrderType.PRE_ORDER : OrderType.REGULAR),
         status: OrderStatus.PENDING,
@@ -212,22 +211,22 @@ export class OrdersService {
 
       // Load all payments for this order (for installments)
       const payments = await this.paymentRepository.find({
-        invoiceId: {
+        invoice: {
           $in: await this.invoiceRepository
-            .find({ orderId: order.id }, { fields: ['id'] })
+            .find({ order })
             .then((invoices) => invoices.map((i) => i.id)),
         },
-        businessId,
+        business: { ggId: businessId },
       });
 
       // Load payment schedule if exists
-      const invoices = await this.invoiceRepository.find({ orderId: order.id });
+      const invoices = await this.invoiceRepository.find({ order });
       let paymentSchedule: PaymentSchedule[] = [];
 
       if (invoices.length > 0) {
         paymentSchedule = await this.scheduleRepository.find({
-          businessId,
-          invoiceId: invoices[0].id,
+          business: { ggId: businessId },
+          invoice: invoices[0],
         });
       }
 
@@ -241,7 +240,7 @@ export class OrdersService {
   ): Promise<{ orders: OrderResponseDto[]; total: number }> {
     const [orders, total] = await this.orderRepository.findAndCount(
       {
-        businessId,
+        business: { ggId: businessId },
         ...(query.search && {
           $or: [
             { orderNumber: { $ilike: `%${query.search}%` } },
@@ -263,14 +262,14 @@ export class OrdersService {
       orders.map(async (order) => {
         // Load payment schedule for each order
         const invoices = await this.invoiceRepository.find({
-          orderId: order.id,
+          order,
         });
         let paymentSchedule: PaymentSchedule[] = [];
 
         if (invoices.length > 0) {
           paymentSchedule = await this.scheduleRepository.find({
-            businessId,
-            invoiceId: invoices[0].id,
+            business: { ggId: businessId },
+            invoice: invoices[0],
           });
         }
         return await this.mapToOrderResponse(order, undefined, paymentSchedule);
@@ -290,7 +289,7 @@ export class OrdersService {
     const order = await this.orderRepository.findOne(
       {
         id: orderId,
-        businessId,
+        business: { ggId: businessId },
       },
       {
         populate: ['customer', 'items'],
@@ -302,13 +301,13 @@ export class OrdersService {
     }
 
     // Load payment schedule
-    const invoices = await this.invoiceRepository.find({ orderId: order.id });
+    const invoices = await this.invoiceRepository.find({ order });
     let paymentSchedule: PaymentSchedule[] = [];
 
     if (invoices.length > 0) {
       paymentSchedule = await this.scheduleRepository.find({
-        businessId,
-        invoiceId: invoices[0].id,
+        business: { ggId: businessId },
+        invoice: invoices[0],
       });
     }
 
@@ -324,7 +323,7 @@ export class OrdersService {
     const order = await this.orderRepository.findOne(
       {
         id: orderId,
-        businessId,
+        business: { ggId: businessId },
       },
       {
         populate: ['customer'],
@@ -337,8 +336,8 @@ export class OrdersService {
 
     // Check if invoice already exists for this order
     const existingInvoice = await this.invoiceRepository.findOne({
-      orderId: order.id,
-      businessId,
+      order,
+      business: { ggId: businessId },
     });
 
     if (existingInvoice) {
@@ -346,12 +345,10 @@ export class OrdersService {
     }
 
     const invoice = this.invoiceRepository.create({
-      businessId,
+      business: businessId,
       invoiceNumber: generateReference('INV'),
       order,
-      orderId: order.id,
       customer: order.customer,
-      customerId: order.customerId,
       type: dto.type || InvoiceType.STANDARD,
       status: InvoiceStatus.DRAFT,
       issueDate: new Date(),
@@ -367,7 +364,7 @@ export class OrdersService {
       createdBy,
     });
 
-    await this.invoiceRepository.persistAndFlush(invoice);
+    await this.em.persistAndFlush(invoice);
 
     return this.mapToInvoiceResponse(invoice);
   }
@@ -381,7 +378,7 @@ export class OrdersService {
     // Find the order and its invoice
     const order = await this.orderRepository.findOne({
       id: orderId,
-      businessId,
+      business: { ggId: businessId },
     });
 
     if (!order) {
@@ -391,8 +388,8 @@ export class OrdersService {
     // Find the invoice for this order
     const invoice = await this.invoiceRepository.findOne(
       {
-        orderId: order.id,
-        businessId,
+        order,
+        business: { ggId: businessId },
       },
       {
         populate: ['customer'],
@@ -418,7 +415,7 @@ export class OrdersService {
         Invoice,
         {
           id: invoiceId,
-          businessId,
+          business: { ggId: businessId },
         },
         {
           populate: ['customer'],
@@ -435,8 +432,8 @@ export class OrdersService {
 
       // Determine payment type based on whether invoice has payment schedules
       const existingSchedules = await em.find(PaymentSchedule, {
-        businessId,
-        invoiceId: invoice.id,
+        business: { ggId: businessId },
+        invoice: invoice,
       });
       const paymentType =
         existingSchedules.length > 0
@@ -480,12 +477,10 @@ export class OrdersService {
       }
 
       const payment = em.create(Payment, {
-        businessId,
+        business: invoice.business,
         paymentNumber: generateReference('PAY'),
         invoice,
-        invoiceId: invoice.id,
         customer: invoice.customer,
-        customerId: invoice.customerId,
         amount: dto.amount,
         method: dto.method,
         type: paymentType,
@@ -539,8 +534,8 @@ export class OrdersService {
 
           // Update invoice amounts based on schedule distribution
           const updatedSchedules = await em.find(PaymentSchedule, {
-            businessId,
-            invoiceId: invoice.id,
+            business: { ggId: businessId },
+            invoice: invoice,
           });
 
           const totalPaid = updatedSchedules.reduce(
@@ -620,12 +615,10 @@ export class OrdersService {
     }
     // Create invoice first
     const invoice = em.create(Invoice, {
-      businessId,
+      business: order.business,
       invoiceNumber: generateReference('INV'),
       order,
-      orderId: order.id,
       customer: order.customer,
-      customerId: order.customerId,
       type: InvoiceType.STANDARD,
       status: InvoiceStatus.DRAFT,
       issueDate: new Date(),
@@ -685,12 +678,10 @@ export class OrdersService {
     }
 
     const payment = em.create(Payment, {
-      businessId,
+      business: order.business,
       paymentNumber: generateReference('PAY'),
       invoice,
-      invoiceId: invoice.id,
       customer: order.customer,
-      customerId: order.customerId,
       amount: paymentAmount,
       method: dto.paymentMethod,
       type: dto.paymentType,
@@ -774,14 +765,14 @@ export class OrdersService {
   ): Promise<Customer> {
     // Try to find existing customer by phone
     let customer = await em.findOne(Customer, {
-      businessId,
+      business: { ggId: businessId },
       phone: customerInfo.phone,
     });
 
     if (!customer) {
       // Create new customer
       customer = em.create(Customer, {
-        businessId,
+        business: { ggId: businessId },
         firstName: customerInfo.firstName,
         lastName: customerInfo.lastName,
         phone: customerInfo.phone,
@@ -806,7 +797,7 @@ export class OrdersService {
       Item,
       {
         id: { $in: itemIds },
-        businessId,
+        business: { ggId: businessId },
       },
       {
         lockMode: LockMode.PESSIMISTIC_WRITE,
@@ -868,11 +859,9 @@ export class OrdersService {
       const isPreOrder = item.availableStock < orderItemData.quantity;
 
       const orderItem = em.create(OrderItem, {
-        businessId,
+        business: order.business,
         order,
-        orderId: order.id,
         item,
-        itemId: item.id,
         itemSku: item.sku,
         itemName: item.name,
         quantity: orderItemData.quantity,
@@ -888,9 +877,8 @@ export class OrdersService {
       if (isPreOrder) {
         // Create reservation for out-of-stock items
         const reservation = em.create(Reservation, {
-          businessId,
+          business: order.business,
           item,
-          itemId: item.id,
           quantity: orderItemData.quantity - item.availableStock,
           type: ReservationType.ORDER,
           status: ReservationStatus.ACTIVE,
@@ -945,7 +933,7 @@ export class OrdersService {
       status: order.status,
       items: order.items.getItems().map((item) => ({
         id: item.id,
-        itemId: item.itemId,
+        itemId: item.item.id,
         itemSku: item.itemSku,
         itemName: item.itemName,
         quantity: item.quantity,
@@ -999,9 +987,9 @@ export class OrdersService {
     return {
       id: invoice.id,
       invoiceNumber: invoice.invoiceNumber,
-      orderId: invoice.orderId,
+      orderId: invoice.order.id,
       orderNumber: invoice.order.orderNumber,
-      customerId: invoice.customerId,
+      customerId: invoice.customer.id,
       customerName: invoice.customer.fullName,
       customerPhone: invoice.customer.phone,
       type: invoice.type,
@@ -1032,9 +1020,9 @@ export class OrdersService {
     return {
       id: payment.id,
       paymentNumber: payment.paymentNumber,
-      invoiceId: payment.invoiceId,
+      invoiceId: payment.invoice.id,
       invoiceNumber: payment.invoice.invoiceNumber,
-      customerId: payment.customerId,
+      customerId: payment.customer.id,
       customerName: payment.customer.fullName,
       amount: payment.amount,
       currency: payment.currency,

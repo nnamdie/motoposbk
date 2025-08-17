@@ -1,7 +1,7 @@
 import { Entity, Enum, ManyToOne, Property } from '@mikro-orm/core';
 
 import { User } from '../../auth/entities/user.entity';
-import { TenantEntity } from '../../common/entities/base.entity';
+import { TenantEntity } from '@/business/entities/tenant.entity';
 import { StockEntryStatus } from '../enums/stock-entry-status.enum';
 import { StockEntryType } from '../enums/stock-entry-type.enum';
 import { Item } from './item.entity';
@@ -10,9 +10,6 @@ import { Item } from './item.entity';
 export class StockEntry extends TenantEntity {
   @ManyToOne(() => Item)
   item!: Item;
-
-  @Property({ type: 'int' })
-  itemId!: number;
 
   @Enum({ items: () => StockEntryType })
   type!: StockEntryType;

@@ -1,4 +1,4 @@
-import { EntityManager, EntityRepository, LockMode } from '@mikro-orm/core';
+import { EntityRepository, EntityManager, LockMode } from '@mikro-orm/core';
 import { InjectRepository } from '@mikro-orm/nestjs';
 import {
   BadRequestException,
@@ -44,7 +44,7 @@ export class InventoryService {
   ): Promise<ItemResponseDto> {
     // Create item without SKU first
     const item = this.itemRepository.create({
-      businessId,
+      business: { ggId: businessId } as any,
       name: dto.name,
       modelNo: dto.modelNo,
       description: dto.description,
@@ -63,7 +63,7 @@ export class InventoryService {
       // SKU will be generated after attributes are created
     });
 
-    await this.itemRepository.persistAndFlush(item);
+    await this.em.persistAndFlush(item);
 
     // Create attributes if provided
     const attributeData: Array<{ name: string; value: string }> = [];
@@ -72,7 +72,7 @@ export class InventoryService {
       const attributes = dto.attributes.map((attrDto) => {
         attributeData.push({ name: attrDto.name, value: attrDto.value });
         return this.itemAttributeRepository.create({
-          businessId,
+          business: { ggId: businessId } as any,
           item,
           name: attrDto.name,
           value: attrDto.value,
@@ -83,12 +83,12 @@ export class InventoryService {
         });
       });
 
-      await this.itemAttributeRepository.persistAndFlush(attributes);
+      await this.em.persistAndFlush(attributes);
     }
 
     // Generate SKU with access to attributes
     item.sku = generateSKU(item.name, item.modelNo, attributeData);
-    await this.itemRepository.persistAndFlush(item);
+    await this.em.persistAndFlush(item);
 
     // Reload item with attributes
     await this.em.populate(item, ['attributes']);
@@ -100,9 +100,10 @@ export class InventoryService {
     businessId: string,
     query: PaginatedQueryDto,
   ): Promise<{ items: ItemResponseDto[]; total: number }> {
+    const filter: any = { business: { ggId: businessId } };
     const [items, total] = await this.itemRepository.findAndCount(
       {
-        businessId,
+        ...filter,
         status: { $ne: ItemStatus.DISCONTINUED },
         ...(query.search && {
           $or: [
@@ -135,7 +136,7 @@ export class InventoryService {
     const item = await this.itemRepository.findOne(
       {
         id: itemId,
-        businessId,
+        business: { ggId: businessId },
       },
       {
         populate: ['attributes'],
@@ -161,7 +162,7 @@ export class InventoryService {
         Item,
         {
           id: itemId,
-          businessId,
+          business: { ggId: businessId },
         },
         { lockMode: LockMode.PESSIMISTIC_WRITE },
       );
@@ -181,9 +182,8 @@ export class InventoryService {
 
       // Create stock entry
       const stockEntry = em.create(StockEntry, {
-        businessId,
+        business: { ggId: businessId } as any,
         item,
-        itemId: item.id,
         type: dto.type,
         quantity: dto.quantity,
         previousStock,
@@ -224,7 +224,7 @@ export class InventoryService {
         Item,
         {
           id: dto.itemId,
-          businessId,
+          business: { ggId: businessId },
         },
         { lockMode: LockMode.PESSIMISTIC_WRITE },
       );
@@ -240,9 +240,8 @@ export class InventoryService {
       }
 
       const reservation = em.create(Reservation, {
-        businessId,
+        business: { ggId: businessId } as any,
         item,
-        itemId: item.id,
         quantity: dto.quantity,
         type: dto.type,
         customerName: dto.customerName,
@@ -286,11 +285,11 @@ export class InventoryService {
     const reservations = await em.find(
       Reservation,
       {
-        itemId: item.id,
+        item: item,
         status: ReservationStatus.ACTIVE,
       },
       {
-        orderBy: { createdAt: 'ASC' },
+        orderBy: { createdAt: 'ASC' as any },
       },
     );
 
@@ -366,7 +365,7 @@ export class InventoryService {
   ): StockEntryResponseDto {
     return {
       id: stockEntry.id,
-      itemId: stockEntry.itemId,
+      itemId: stockEntry.item.id,
       itemName: stockEntry.item.name,
       itemSku: stockEntry.item.sku,
       type: stockEntry.type,

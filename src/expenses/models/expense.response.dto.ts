@@ -4,6 +4,26 @@ import { ExpenseStatus } from '../enums/expense-status.enum';
 import { ExpenseCategory } from '../enums/expense-category.enum';
 import { MemberResponseDto } from '@/auth/models/member-profile.response.dto';
 
+export class ExpenseMemberDto {
+  @ApiProperty({
+    description: 'Member ID',
+    example: 1,
+  })
+  id!: number;
+
+  @ApiProperty({
+    description: 'Full name of the member',
+    example: 'John Doe',
+  })
+  fullName!: string;
+
+  @ApiProperty({
+    description: 'Phone number of the member',
+    example: '+2348012345678',
+  })
+  phone!: string;
+}
+
 export class ExpenseResponseDto {
   @ApiProperty({
     description: 'Expense ID',
@@ -75,19 +95,25 @@ export class ExpenseResponseDto {
 
   @ApiProperty({
     description: 'Member who created the expense request',
-    type: MemberResponseDto,
+    type: ExpenseMemberDto,
   })
-  requester!: MemberResponseDto;
+  requester!: ExpenseMemberDto;
 
   @ApiPropertyOptional({
     description: 'Member who approved/rejected the expense',
-    type: MemberResponseDto,
+    type: ExpenseMemberDto,
   })
-  approver?: MemberResponseDto;
+  approver?: ExpenseMemberDto;
 
   @ApiProperty({
     description: 'Date when the expense was created',
     example: '2024-01-10T09:00:00.000Z',
   })
   createdAt!: string;
+
+  @ApiProperty({
+    description: 'Date when the expense was requested',
+    example: '2024-01-10T09:00:00.000Z',
+  })
+  requestedAt!: string;
 }

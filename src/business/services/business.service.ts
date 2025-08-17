@@ -1,4 +1,4 @@
-import { EntityRepository } from '@mikro-orm/core';
+import { EntityRepository, EntityManager } from '@mikro-orm/core';
 import { InjectRepository } from '@mikro-orm/nestjs';
 import { Injectable, NotFoundException } from '@nestjs/common';
 
@@ -11,6 +11,7 @@ export class BusinessService {
   constructor(
     @InjectRepository(Business)
     private readonly businessRepository: EntityRepository<Business>,
+    private readonly em: EntityManager,
   ) {}
 
   async getProfile(businessId: string): Promise<BusinessProfileResponseDto> {
@@ -62,7 +63,7 @@ export class BusinessService {
 
     business.updatedAt = new Date();
 
-    await this.businessRepository.flush();
+    await this.em.flush();
 
     return this.getProfile(businessId);
   }

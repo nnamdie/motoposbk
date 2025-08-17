@@ -52,7 +52,45 @@ export class AuthController {
     };
   }
 
-  @Post('business/:businessGgId/login')
+  @Post('business/:businessGgId/login/request-otp')
+  @UseGuards(TenantResolveGuard)
+  @ApiOperation({
+    summary: 'Member login to business',
+    description: 'Authenticate a member to access a specific business account',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Login successful',
+    type: LoginResponseDto,
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Validation error',
+    type: ValidationErrorDto,
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Invalid credentials or business not active',
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'Business not found',
+  })
+  async loginWithOtp(
+    @Param('businessGgId') businessGgId: string,
+    @Body() dto: LoginRequestDto,
+  ): Promise<BaseResponseDto<LoginResponseDto>> {
+    const result = await this.authService.login(businessGgId, dto);
+
+    return {
+      success: true,
+      data: result,
+      message: 'Login successful',
+      timestamp: new Date().toISOString(),
+    };
+  }
+
+  @Post('business/:businessGgId/login/verify-otp')
   @UseGuards(TenantResolveGuard)
   @ApiOperation({
     summary: 'Member login to business',

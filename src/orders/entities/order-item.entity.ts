@@ -1,6 +1,6 @@
 import { Entity, ManyToOne, Property } from '@mikro-orm/core';
 
-import { TenantEntity } from '../../common/entities/base.entity';
+import { TenantEntity } from '@/business/entities/tenant.entity';
 import { Item } from '../../inventory/entities/item.entity';
 import { Order } from './order.entity';
 
@@ -9,14 +9,8 @@ export class OrderItem extends TenantEntity {
   @ManyToOne(() => Order)
   order!: Order;
 
-  @Property({ type: 'int' })
-  orderId!: number;
-
   @ManyToOne(() => Item)
   item!: Item;
-
-  @Property({ type: 'int' })
-  itemId!: number;
 
   @Property({ type: 'varchar', length: 50 })
   itemSku!: string; // Snapshot of SKU at time of order

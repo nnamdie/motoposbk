@@ -7,11 +7,11 @@ import {
   Unique,
 } from '@mikro-orm/core';
 
-import { TenantEntity } from '../../common/entities/base.entity';
+import { TenantEntity } from '@/business/entities/tenant.entity';
 import { Gender } from '../enums/gender.enum';
 
 @Entity({ tableName: 'customers' })
-@Unique({ properties: ['businessId', 'phone'] })
+@Unique({ properties: ['business', 'phone'] })
 export class Customer extends TenantEntity {
   @Property({ type: 'varchar', length: 255 })
   firstName!: string;

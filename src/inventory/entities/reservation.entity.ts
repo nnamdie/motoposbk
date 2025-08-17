@@ -1,7 +1,7 @@
 import { Entity, Enum, ManyToOne, Property } from '@mikro-orm/core';
 
 import { User } from '../../auth/entities/user.entity';
-import { TenantEntity } from '../../common/entities/base.entity';
+import { TenantEntity } from '@/business/entities/tenant.entity';
 import { ReservationStatus } from '../enums/reservation-status.enum';
 import { ReservationType } from '../enums/reservation-type.enum';
 import { Item } from './item.entity';
@@ -10,9 +10,6 @@ import { Item } from './item.entity';
 export class Reservation extends TenantEntity {
   @ManyToOne(() => Item)
   item!: Item;
-
-  @Property({ type: 'int' })
-  itemId!: number;
 
   @Property({ type: 'int' })
   quantity!: number; // Quantity reserved

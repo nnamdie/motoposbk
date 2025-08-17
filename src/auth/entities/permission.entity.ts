@@ -33,7 +33,7 @@ export class Permission extends BaseEntity {
   @Property({ type: 'boolean', default: true })
   isActive: boolean = true;
 
-  @ManyToMany(() => Role, (role) => role.permissions)
+  @ManyToMany(() => Role, (role) => role.permissions, { owner: true })
   roles = new Collection<Role>(this);
 
   @ManyToMany(() => Member, (member) => member.directPermissions)
