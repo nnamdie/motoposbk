@@ -4,7 +4,7 @@ import { TenantEntity } from '@/business/entities/tenant.entity';
 import { NotificationChannel } from '../enums/notification-channel.enum';
 import { NotificationStatus } from '../enums/notification-status.enum';
 
-@Entity()
+@Entity({ tableName: 'notifications' })
 export class Notification extends TenantEntity {
   @Property({ type: 'varchar', length: 255 })
   template!: string;

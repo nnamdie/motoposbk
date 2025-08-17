@@ -1,23 +1,26 @@
 {
   "variables": {
     "firstName": "string",
-    "otpCode": "number"
+    "otpCode": "number",
+    "businessName": "string"
   },
   "channels": {
     "whatsapp": {
-      "textTemplateSource": "login-otp.whatsapp.txt",
+      "textTemplateSource": "login-otp.whatsapp.mustache",
       "twilioContentSid": "WAc8025851e979b64b81caf183d020d50f",
       "twilioContentVariables": {
         "1": "{{firstName}}",
-        "2": "{{otpCode}}"
+        "2": "{{otpCode}}",
+        "3": "{{businessName}}"
       }
     },
     "sms": {
-      "textTemplateSource": "login-otp.sms.txt",
+      "textTemplateSource": "login-otp.sms.mustache",
       "twilioContentSid": "SMSc8025851e979b64b81caf183d020d50f",
       "twilioContentVariables": {
         "1": "{{firstName}}",
-        "2": "{{otpCode}}"
+        "2": "{{otpCode}}",
+        "3": "{{businessName}}"
       }
     }
   }

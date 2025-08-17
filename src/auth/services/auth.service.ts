@@ -16,13 +16,16 @@ import {
 import { generateBusinessId } from '../../common/utils/helpers';
 import { Member } from '../entities/member.entity';
 import { User } from '../entities/user.entity';
-import { LoginRequestDto } from '../models/login.request.dto';
+import { AuthOtp } from '../entities/auth-otp.entity';
 import { LoginResponseDto } from '../models/login.response.dto';
 import { RegisterBusinessRequestDto } from '../models/register-business.request.dto';
 import { RegisterBusinessResponseDto } from '../models/register-business.response.dto';
+import { RequestOtpRequestDto } from '../models/request-otp.request.dto';
+import { VerifyOtpRequestDto } from '../models/verify-otp.request.dto';
 import { UserProfileDto } from '../models/user-profile.response.dto';
 import { AuthenticatedUser } from '@/common/decorators/current-user.decorator';
 import { NotificationService } from '@/notifications/services/notification.service';
+import { NotificationChannel } from '@/notifications/enums/notification-channel.enum';
 
 @Injectable()
 export class AuthService {
@@ -33,6 +36,8 @@ export class AuthService {
     private readonly memberRepository: EntityRepository<Member>,
     @InjectRepository(Business)
     private readonly businessRepository: EntityRepository<Business>,
+    @InjectRepository(AuthOtp)
+    private readonly authOtpRepository: EntityRepository<AuthOtp>,
     private readonly em: EntityManager,
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
@@ -131,75 +136,6 @@ export class AuthService {
     };
   }
 
-  async login(
-    businessGgId: string,
-    dto: LoginRequestDto,
-  ): Promise<LoginResponseDto> {
-    // Find business
-    const business = await this.businessRepository.findOne({
-      ggId: businessGgId,
-    });
-
-    if (!business) {
-      throw new NotFoundException('Business not found');
-    }
-
-    if (business.status !== BusinessStatus.ACTIVE) {
-      throw new UnauthorizedException('Business is not active');
-    }
-
-    // Find user
-    const user = await this.userRepository.findOne({ phone: dto.phone });
-
-    if (!user || !user.isActive) {
-      throw new UnauthorizedException('Invalid credentials');
-    }
-
-    // Validate password
-    const isPasswordValid = await user.validatePassword(dto.password);
-
-    if (!isPasswordValid) {
-      throw new UnauthorizedException('Invalid credentials');
-    }
-
-    // Find membership
-    const member = await this.memberRepository.findOne(
-      { user: user, business: business },
-      { populate: ['roles', 'roles.permissions', 'directPermissions'] },
-    );
-
-    if (!member || member.status !== 'Active') {
-      throw new UnauthorizedException(
-        'User is not a member of this business or membership is not active',
-      );
-    }
-
-    // Update last login
-    user.lastLoginAt = new Date();
-    await this.em.flush();
-
-    // Generate tokens
-    const payload = {
-      sub: user.id,
-      phone: user.phone,
-      businessId: business.ggId,
-      memberId: member.id,
-      isOwner: member.isOwner,
-    };
-
-    const accessToken = this.jwtService.sign(payload);
-    const refreshToken = this.jwtService.sign(payload, {
-      secret: this.configService.get('JWT_REFRESH_SECRET'),
-      expiresIn: this.configService.get('JWT_REFRESH_EXPIRES_IN'),
-    });
-
-
-    return {
-      accessToken,
-      refreshToken,
-    };
-  }
-
   async validateUser(userId: number): Promise<User | null> {
     return this.userRepository.findOne({ id: userId, isActive: true });
   }
@@ -272,5 +208,208 @@ export class AuthService {
         isOwner: member.isOwner,
       },
     };
+  }
+
+  async requestOtp(
+    businessGgId: string,
+    dto: RequestOtpRequestDto,
+  ): Promise<{ success: boolean; message: string; nextStep: string }> {
+    // Find business
+    const business = await this.businessRepository.findOne({
+      ggId: businessGgId,
+    });
+
+    if (!business) {
+      throw new NotFoundException('Business not found');
+    }
+
+    if (business.status !== BusinessStatus.ACTIVE) {
+      throw new UnauthorizedException('Business is not active');
+    }
+
+    // Find user
+    const user = await this.userRepository.findOne({ phone: dto.phone });
+
+    if (!user || !user.isActive) {
+      throw new UnauthorizedException('Invalid credentials');
+    }
+
+    // Validate password
+    const isPasswordValid = await user.validatePassword(dto.password);
+
+    if (!isPasswordValid) {
+      throw new UnauthorizedException('Invalid credentials');
+    }
+
+    // Find membership
+    const member = await this.memberRepository.findOne(
+      { user: user, business: business },
+    );
+
+    if (!member || member.status !== 'Active') {
+      throw new UnauthorizedException(
+        'User is not a member of this business or membership is not active',
+      );
+    }
+
+    // Generate OTP code
+    const otpCode = this.generateOtpCode();
+    const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+
+    // Create or update OTP record
+    let authOtp = await this.authOtpRepository.findOne({
+      phone: dto.phone,
+      business: business,
+      isUsed: false,
+      isExpired: false,
+    });
+
+    if (authOtp) {
+      // Update existing OTP
+      authOtp.otpCode = otpCode;
+      authOtp.expiresAt = expiresAt;
+      authOtp.attempts = 0;
+    } else {
+      // Create new OTP
+      authOtp = this.authOtpRepository.create({
+        otpCode,
+        phone: dto.phone,
+        business,
+        user,
+        expiresAt,
+      });
+    }
+
+    await this.em.persistAndFlush(authOtp);
+
+          // Send OTP notification
+      try {
+        await this.notificationService.queueNotification({
+          receiver: user,
+          business: business,
+          template: 'login-otp',
+          variables: {
+            otpCode,
+            firstName: user.firstName,
+            businessName: business.name,
+          },
+          channel: NotificationChannel.WHATSAPP, // Default to SMS, could be configurable
+          sendAt: new Date(),
+        });
+      } catch (error) {
+        // Log error but don't fail the request
+        console.error('Failed to send OTP notification:', error);
+      }
+
+    return {
+      success: true,
+      message: 'OTP sent successfully',
+      nextStep: 'pending_verification',
+    };
+  }
+
+  async verifyOtp(
+    businessGgId: string,
+    dto: VerifyOtpRequestDto,
+  ): Promise<LoginResponseDto> {
+    // Find business
+    const business = await this.businessRepository.findOne({
+      ggId: businessGgId,
+    });
+
+    if (!business) {
+      throw new NotFoundException('Business not found');
+    }
+
+    if (business.status !== BusinessStatus.ACTIVE) {
+      throw new UnauthorizedException('Business is not active');
+    }
+
+    // Find user
+    const user = await this.userRepository.findOne({ phone: dto.phone });
+
+    if (!user || !user.isActive) {
+      throw new UnauthorizedException('Invalid credentials');
+    }
+
+    // Find OTP record
+    const authOtp = await this.authOtpRepository.findOne({
+      otpCode: dto.otpCode,
+      phone: dto.phone,
+      business: business,
+      isUsed: false,
+      isExpired: false,
+    });
+
+    if (!authOtp) {
+      throw new UnauthorizedException('Invalid OTP code');
+    }
+
+    // Check if OTP is expired
+    if (new Date() > authOtp.expiresAt) {
+      authOtp.isExpired = true;
+      await this.em.flush();
+      throw new UnauthorizedException('OTP code has expired');
+    }
+
+    // Check attempts
+    if (authOtp.attempts >= authOtp.maxAttempts) {
+      authOtp.isExpired = true;
+      await this.em.flush();
+      throw new UnauthorizedException('OTP code has been blocked due to too many attempts');
+    }
+
+    // Increment attempts
+    authOtp.attempts += 1;
+
+    // Verify OTP code
+    if (authOtp.otpCode !== dto.otpCode) {
+      await this.em.flush();
+      throw new UnauthorizedException('Invalid OTP code');
+    }
+
+    // Mark OTP as used
+    authOtp.isUsed = true;
+    await this.em.flush();
+
+    // Find membership
+    const member = await this.memberRepository.findOne(
+      { user: user, business: business },
+      { populate: ['roles', 'roles.permissions', 'directPermissions'] },
+    );
+
+    if (!member || member.status !== 'Active') {
+      throw new UnauthorizedException(
+        'User is not a member of this business or membership is not active',
+      );
+    }
+
+    // Update last login
+    user.lastLoginAt = new Date();
+    await this.em.flush();
+
+    // Generate tokens
+    const payload = {
+      sub: user.id,
+      phone: user.phone,
+      businessId: business.ggId,
+      memberId: member.id,
+      isOwner: member.isOwner,
+    };
+
+    const accessToken = this.jwtService.sign(payload);
+    const refreshToken = this.jwtService.sign(payload, {
+      secret: this.configService.get('JWT_REFRESH_SECRET'),
+      expiresIn: this.configService.get('JWT_REFRESH_EXPIRES_IN'),
+    });
+
+    return {
+      accessToken,
+      refreshToken,
+    };
+  }
+
+  private generateOtpCode(): string {
+    return Math.floor(100000 + Math.random() * 900000).toString();
   }
 }

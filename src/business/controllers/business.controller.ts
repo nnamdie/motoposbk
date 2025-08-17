@@ -20,6 +20,7 @@ import { BaseResponseDto } from '../../common/models/base-response.dto';
 import { BusinessProfileResponseDto } from '../models/business-profile.response.dto';
 import { UpdateBusinessProfileRequestDto } from '../models/update-business-profile.request.dto';
 import { BusinessService } from '../services/business.service';
+import { ApiBaseResponse } from '@/common/decorators/base-response.decorator';
 
 @ApiTags('Business')
 @Controller('business/:businessGgId')
@@ -33,7 +34,7 @@ export class BusinessController {
     summary: 'Get business profile',
     description: 'Retrieve the current business profile information',
   })
-  @ApiResponse({
+  @ApiBaseResponse({
     status: 200,
     description: 'Business profile retrieved successfully',
     type: BusinessProfileResponseDto,
@@ -57,7 +58,7 @@ export class BusinessController {
     summary: 'Update business profile',
     description: 'Update the current business profile information',
   })
-  @ApiResponse({
+  @ApiBaseResponse({
     status: 200,
     description: 'Business profile updated successfully',
     type: BusinessProfileResponseDto,

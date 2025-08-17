@@ -60,9 +60,9 @@ export class RegisterBusinessRequestDto {
   @IsPhoneNumber('NG')
   ownerPhone!: string;
 
-  @ApiProperty({ example: 'SecurePassword123!', minLength: 8 })
+  @ApiProperty({ example: 'SecurePassword123!', minLength: 4 })
   @IsString()
-  @MinLength(8)
+  @MinLength(4)
   @MaxLength(255)
   password!: string;
 }

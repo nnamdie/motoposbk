@@ -30,7 +30,7 @@ import {
   GetTenantContext,
   TenantContext,
 } from '../../common/decorators/tenant-context.decorator';
-import { BaseResponseDto } from '../../common/models/base-response.dto';
+import { BaseResponseDto, PaginatedResponseDto } from '../../common/models/base-response.dto';
 import { PaginatedQueryDto } from '../../common/models/paginated-query.dto';
 import { CalculateCartRequestDto } from '../models/calculate-cart.request.dto';
 import { CalculateCartResponseDto } from '../models/calculate-cart.response.dto';
@@ -39,6 +39,8 @@ import { CreatePaymentRequestDto } from '../models/create-payment.request.dto';
 import { OrderResponseDto } from '../models/order.response.dto';
 import { PaymentResponseDto } from '../models/payment.response.dto';
 import { OrdersService } from '../services/orders.service';
+import { ApiBaseResponse } from '@/common/decorators/base-response.decorator';
+import { ApiPaginatedResponse } from '@/common/decorators/api-paginated-response.decorator';
 
 @ApiTags('Orders')
 @ApiBearerAuth()
@@ -49,7 +51,7 @@ export class OrdersController {
 
   @Post('calculate-cart')
   @ApiOperation({ summary: 'Calculate cart totals with current item prices' })
-  @ApiResponse({
+  @ApiBaseResponse({
     status: 200,
     description: 'Cart calculated successfully',
     type: CalculateCartResponseDto,
@@ -75,7 +77,7 @@ export class OrdersController {
   @Post()
   @RequirePermissions(PERMISSIONS.ORDERS.CREATE)
   @ApiOperation({ summary: 'Create a new order' })
-  @ApiResponse({
+  @ApiBaseResponse({
     status: 201,
     description: 'Order created successfully',
     type: OrderResponseDto,
@@ -102,16 +104,16 @@ export class OrdersController {
   @Get()
   @RequirePermissions(PERMISSIONS.ORDERS.READ)
   @ApiOperation({ summary: 'Get all orders' })
-  @ApiResponse({
+  @ApiPaginatedResponse({
     status: 200,
     description: 'Orders retrieved successfully',
-    type: [OrderResponseDto],
+    type: OrderResponseDto,
   })
   async getOrders(
     @GetTenantContext() tenantContext: TenantContext,
     @Query() query: PaginatedQueryDto,
-  ): Promise<BaseResponseDto<{ orders: OrderResponseDto[]; total: number }>> {
-    const result = await this.ordersService.getOrders(
+  ): Promise<PaginatedResponseDto<OrderResponseDto>> {
+    const {orders, total} = await this.ordersService.getOrders(
       tenantContext.businessId,
       query,
     );
@@ -119,7 +121,15 @@ export class OrdersController {
     return {
       success: true,
       message: 'Orders retrieved successfully',
-      data: result,
+      data: orders,
+      meta: {
+        page: query.page || 1,
+        limit: query.limit || 10,
+        total,
+        totalPages: Math.ceil(total / query.limit),
+        hasNextPage: query.page < Math.ceil(total / query.limit),
+        hasPreviousPage: query.page > 1,
+      },
       timestamp: new Date().toISOString(),
     };
   }

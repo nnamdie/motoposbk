@@ -5,11 +5,13 @@ import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
 
 import { Business } from '../business/entities/business.entity';
+import { NotificationsModule } from '../notifications/notifications.module';
 import { AuthController } from './controllers/auth.controller';
 import { Member } from './entities/member.entity';
 import { Permission } from './entities/permission.entity';
 import { Role } from './entities/role.entity';
 import { User } from './entities/user.entity';
+import { AuthOtp } from './entities/auth-otp.entity';
 import { AuthService } from './services/auth.service';
 import { JwtStrategy } from './strategies/jwt.strategy';
 
@@ -25,7 +27,8 @@ import { JwtStrategy } from './strategies/jwt.strategy';
       }),
       inject: [ConfigService],
     }),
-    MikroOrmModule.forFeature([User, Member, Role, Permission, Business]),
+    MikroOrmModule.forFeature([User, Member, Role, Permission, Business, AuthOtp]),
+    NotificationsModule,
   ],
   controllers: [AuthController],
   providers: [AuthService, JwtStrategy],

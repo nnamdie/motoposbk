@@ -33,10 +33,12 @@ export class NotificationDispatchService {
     this.logger.log('Starting notification dispatch process...');
 
     try {
-      // Fetch ALL pending notifications across ALL businesses
+      // Fetch ALL pending notifications across ALL businesses with business relationship populated
       const pendingNotifications = await this.em.find(Notification, {
         status: NotificationStatus.PENDING,
         sendAt: { $lte: new Date() },
+      }, {
+        populate: ['business', 'receiver']
       });
 
       if (pendingNotifications.length === 0) {
@@ -64,10 +66,12 @@ export class NotificationDispatchService {
     this.logger.log('Starting failed notifications retry process...');
 
     try {
-      // Fetch ALL failed notifications across ALL businesses
+      // Fetch ALL failed notifications across ALL businesses with business relationship populated
       const failedNotifications = await this.em.find(Notification, {
         status: NotificationStatus.FAILED,
         retryCount: { $lt: this.maxRetryCount },
+      }, {
+        populate: ['business', 'receiver']
       });
 
       if (failedNotifications.length === 0) {
@@ -91,6 +95,12 @@ export class NotificationDispatchService {
 
   private async processNotification(notification: Notification): Promise<void> {
     try {
+      // Ensure business relationship is populated
+      if (!notification.business) {
+        this.logger.error(`Notification ${notification.id} has no business relationship. Skipping processing.`);
+        return;
+      }
+
       this.logger.log(`Processing notification ${notification.id} for template '${notification.template}' (Business: ${notification.business.ggId})`);
 
       // Step 1: Get template configuration from cache
@@ -146,11 +156,15 @@ export class NotificationDispatchService {
       }
     } catch (error) {
       this.logger.error(`Error processing notification ${notification.id}: ${error.message}`);
-      await this.notificationService.markNotificationFailed(
-        notification.id,
-        notification.business.ggId,
-        error.message,
-      );
+      if (notification.business) {
+        await this.notificationService.markNotificationFailed(
+          notification.id,
+          notification.business.ggId,
+          error.message,
+        );
+      } else {
+        this.logger.error(`Cannot mark notification ${notification.id} as failed - no business relationship`);
+      }
     }
   }
 
@@ -159,6 +173,12 @@ export class NotificationDispatchService {
    */
   private async processFailedNotificationForRetry(notification: Notification): Promise<void> {
     try {
+      // Ensure business relationship is populated
+      if (!notification.business) {
+        this.logger.error(`Failed notification ${notification.id} has no business relationship. Skipping retry.`);
+        return;
+      }
+
       // Check if notification is within retry threshold
       if (notification.retryCount >= this.maxRetryCount) {
         this.logger.warn(`Notification ${notification.id} has exceeded max retry count (${this.maxRetryCount}), skipping retry`);
@@ -206,6 +226,11 @@ export class NotificationDispatchService {
     provider: AbstractNotificationProvider,
   ): Promise<SendNotificationResult> {
     try {
+      // Ensure business relationship is populated
+      if (!notification.business) {
+        throw new Error(`Notification ${notification.id} has no business relationship`);
+      }
+
       // Process template variables using Mustache
       const processedVariables = await this.processTemplateVariables(
         templateConfig,
@@ -248,10 +273,9 @@ export class NotificationDispatchService {
       let templateContent = '';
       if (channelConfig.textTemplateSource) {
         try {
-          templateContent = await fs.readFile(
-            path.resolve(channelConfig.textTemplateSource),
-            'utf-8'
-          );
+          // Use the correct path resolution for template files
+          const templatePath = path.join(process.cwd(), 'src/notifications/templates', channelConfig.textTemplateSource);
+          templateContent = await fs.readFile(templatePath, 'utf-8');
         } catch (error) {
           this.logger.warn(`Could not load template file: ${channelConfig.textTemplateSource}`);
         }

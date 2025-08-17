@@ -97,7 +97,8 @@ export class ExpenseController {
     example: 'ABC123',
   })
   @ApiPaginatedResponse({
-    model: ExpenseResponseDto,
+    status: 200,
+    type: ExpenseResponseDto,
     description: 'Expenses retrieved successfully',
   })
   async getExpenses(

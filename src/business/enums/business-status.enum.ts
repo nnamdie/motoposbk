@@ -1,6 +1,6 @@
 export enum BusinessStatus {
-  PENDING = 'Pending',
-  ACTIVE = 'Active',
-  SUSPENDED = 'Suspended',
-  INACTIVE = 'Inactive',
+  PENDING = 'pending',
+  ACTIVE = 'active',
+  SUSPENDED = 'suspended',
+  INACTIVE = 'inactive',
 }

@@ -6,13 +6,16 @@ import {
   ValidationErrorDto,
 } from '../../common/models/base-response.dto';
 import { TenantResolveGuard } from '../guards/tenant-resolve.guard';
-import { LoginRequestDto } from '../models/login.request.dto';
 import { LoginResponseDto } from '../models/login.response.dto';
 import { RegisterBusinessRequestDto } from '../models/register-business.request.dto';
 import { RegisterBusinessResponseDto } from '../models/register-business.response.dto';
+import { RequestOtpRequestDto } from '../models/request-otp.request.dto';
+import { RequestOtpResponseDto } from '../models/request-otp.response.dto';
+import { VerifyOtpRequestDto } from '../models/verify-otp.request.dto';
 import { AuthService } from '../services/auth.service';
 import { UserProfileDto } from '../models/user-profile.response.dto';
 import { AuthenticatedUser, CurrentUser } from '@/common/decorators/current-user.decorator';
+import { ApiBaseResponse } from '@/common/decorators/base-response.decorator';
 
 @ApiTags('Authentication')
 @Controller()
@@ -55,13 +58,13 @@ export class AuthController {
   @Post('business/:businessGgId/login/request-otp')
   @UseGuards(TenantResolveGuard)
   @ApiOperation({
-    summary: 'Member login to business',
-    description: 'Authenticate a member to access a specific business account',
+    summary: 'Request OTP for member login',
+    description: 'Request an OTP code to be sent to the member\'s phone for authentication',
   })
-  @ApiResponse({
+  @ApiBaseResponse({
     status: 200,
-    description: 'Login successful',
-    type: LoginResponseDto,
+    description: 'OTP requested successfully',
+    type: RequestOtpResponseDto,
   })
   @ApiResponse({
     status: 400,
@@ -76,16 +79,16 @@ export class AuthController {
     status: 404,
     description: 'Business not found',
   })
-  async loginWithOtp(
+  async requestOtp(
     @Param('businessGgId') businessGgId: string,
-    @Body() dto: LoginRequestDto,
-  ): Promise<BaseResponseDto<LoginResponseDto>> {
-    const result = await this.authService.login(businessGgId, dto);
+    @Body() dto: RequestOtpRequestDto,
+  ): Promise<BaseResponseDto<RequestOtpResponseDto>> {
+    const result = await this.authService.requestOtp(businessGgId, dto);
 
     return {
-      success: true,
-      data: result,
-      message: 'Login successful',
+      success: result.success,
+      data: { nextStep: result.nextStep },
+      message: result.message,
       timestamp: new Date().toISOString(),
     };
   }
@@ -93,10 +96,10 @@ export class AuthController {
   @Post('business/:businessGgId/login/verify-otp')
   @UseGuards(TenantResolveGuard)
   @ApiOperation({
-    summary: 'Member login to business',
-    description: 'Authenticate a member to access a specific business account',
+    summary: 'Verify OTP and complete member login',
+    description: 'Verify the OTP code and complete authentication to access a specific business account',
   })
-  @ApiResponse({
+  @ApiBaseResponse({
     status: 200,
     description: 'Login successful',
     type: LoginResponseDto,
@@ -108,17 +111,17 @@ export class AuthController {
   })
   @ApiResponse({
     status: 401,
-    description: 'Invalid credentials or business not active',
+    description: 'Invalid OTP code or business not active',
   })
   @ApiResponse({
     status: 404,
     description: 'Business not found',
   })
-  async login(
+  async verifyOtp(
     @Param('businessGgId') businessGgId: string,
-    @Body() dto: LoginRequestDto,
+    @Body() dto: VerifyOtpRequestDto,
   ): Promise<BaseResponseDto<LoginResponseDto>> {
-    const result = await this.authService.login(businessGgId, dto);
+    const result = await this.authService.verifyOtp(businessGgId, dto);
 
     return {
       success: true,

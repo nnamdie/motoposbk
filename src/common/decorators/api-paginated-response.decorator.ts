@@ -4,17 +4,19 @@ import { PaginatedResponseDto } from "../models/base-response.dto";
 
 export const ApiPaginatedResponse = <TModel extends Type<any>>(
   {
-    model,
+    status,
+    type,
     description,
   }: {
-    model: TModel;
+    status: number;
+    type: TModel;
     description?: string;
   },
 ) => {
   return applyDecorators(
-    ApiExtraModels(PaginatedResponseDto, model),
+    ApiExtraModels(PaginatedResponseDto, type),
     ApiOkResponse({
-      status: 200,
+      status,
       description,
       schema: {
         allOf: [
@@ -23,7 +25,7 @@ export const ApiPaginatedResponse = <TModel extends Type<any>>(
             properties: {
               results: {
                 type: 'array',
-                items: { $ref: getSchemaPath(model) },
+                items: { $ref: getSchemaPath(type) },
               },
             },
           },

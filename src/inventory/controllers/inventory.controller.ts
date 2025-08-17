@@ -87,7 +87,8 @@ export class InventoryController {
     description: 'Retrieve paginated list of inventory items',
   })
   @ApiPaginatedResponse({
-    model: ItemResponseDto,
+    status: 200,
+    type: ItemResponseDto,
     description: 'Items retrieved successfully',
   })
   async getItems(
