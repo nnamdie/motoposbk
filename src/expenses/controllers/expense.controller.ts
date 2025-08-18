@@ -106,25 +106,11 @@ export class ExpenseController {
     @CurrentUser() currentUser: AuthenticatedUser,
     @Query() query: PaginatedQueryDto,
   ): Promise<PaginatedResponseDto<ExpenseResponseDto>> {
-    const { expenses, total } = await this.expenseService.getExpenses(
+    return await this.expenseService.getExpenses(
       tenantContext.businessId,
       query,
       currentUser.member,
     );
-
-    return {
-      success: true,
-      data: expenses,
-      meta: {
-        page: query.page || 1,
-        limit: query.limit || 10,
-        total,
-        totalPages: Math.ceil(total / query.limit),
-        hasNextPage: query.page < Math.ceil(total / query.limit),
-        hasPreviousPage: query.page > 1,
-      },
-      timestamp: new Date().toISOString(),
-    };
   }
 
   @Get(':id')
